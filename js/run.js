@@ -6,9 +6,18 @@
   const SAVE_KEY = "breakout-phosphor-era/save";
   const SAVE_VER = 3;
 
+  const STORE = (root.BP_PLATFORM && root.BP_PLATFORM.store) || {
+    get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } },
+  };
+
   const DEFAULT_SETTINGS = {
     crt: 1, shake: 0.7, particles: 1, damage_numbers: true,
     echo_assist: true, music: 0.45, sfx: 0.8, show_fps: false, vsync: true,
+    // 输入容错：鼠标移出画面自动暂停 / 回来后自动继续（默认开，解决"移出窗口必失球"）
+    pause_on_leave: true, auto_resume: true, pointer_lock: false,
+    // 掉落物开关：关掉后回到纯构筑体验
+    drops: true,
   };
 
   function defaults() {
@@ -29,11 +38,11 @@
     status: "new",
     load() {
       let raw = null;
-      try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { /* 隐私模式 */ }
+      try { raw = STORE.get(SAVE_KEY); } catch (e) { /* 隐私模式 */ }
       let d = null;
       if (raw) { try { d = JSON.parse(raw); } catch (e) { d = null; } }
       if (!d) {
-        try { const bak = localStorage.getItem(SAVE_KEY + ".bak"); if (bak) d = JSON.parse(bak); } catch (e) { d = null; }
+        try { const bak = STORE.get(SAVE_KEY + ".bak"); if (bak) d = JSON.parse(bak); } catch (e) { d = null; }
       }
       if (!d || typeof d !== "object") { this.data = defaults(); this.status = raw ? "corrupt_reset" : "new"; this.persist(); return; }
       const ver = d.version || 1;
@@ -57,8 +66,8 @@
     persist() {
       try {
         const txt = JSON.stringify(this.data);
-        localStorage.setItem(SAVE_KEY, txt);
-        localStorage.setItem(SAVE_KEY + ".bak", txt);
+        STORE.set(SAVE_KEY, txt);
+        STORE.set(SAVE_KEY + ".bak", txt);
       } catch (e) { this.status = "error"; }
     },
     get settings() { return this.data.settings; },
@@ -143,8 +152,43 @@
     return rng.pick(pool);
   }
 
+  // 每日挑战：同一天所有人同一份种子与规则；跨天自动刷新。
+  const DAILY_RULES = [
+    { id: "d0", name: "标准协议", desc: "无额外修正", mods: {} },
+    { id: "d1", name: "高压球场", desc: "初始球速 +80，伤害 +0", mods: { startSpeed: 80, maxSpeed: 80 } },
+    { id: "d2", name: "易碎结构", desc: "伤害 +1，但失去护盾", mods: { damage: 1, shieldCharges: -9 } },
+    { id: "d3", name: "短手", desc: "挡板宽 -26，横移 +12%", mods: { paddleW: -26, paddleSpeed: 0.12 } },
+    { id: "d4", name: "丰收", desc: "掉落率 +60%，初始 2 颗球", mods: { dropRate: 1.6, balls: 1 } },
+    { id: "d5", name: "低重力", desc: "球速 -70，生命 -1", mods: { startSpeed: -70, maxSpeed: -70 } },
+    { id: "d6", name: "暴走", desc: "暴击率 +20%，暴击伤害 +1", mods: { critChance: 0.2, critMult: 1 } },
+  ];
+
   const Run = {
     current: null,
+
+    dailyKey(d) {
+      const dt = d || new Date();
+      return dt.getFullYear() * 10000 + (dt.getMonth() + 1) * 100 + dt.getDate();
+    },
+
+    dailyInfo(d) {
+      const key = this.dailyKey(d);
+      const seed = ((key * 2654435761) % 2147483647) >>> 0;
+      const rule = DAILY_RULES[key % DAILY_RULES.length];
+      const chapter = (Math.floor(key / 100) + key) % CT.CHAPTERS.length;
+      return { key, seed, rule, chapter };
+    },
+
+    startDaily() {
+      const info = this.dailyInfo();
+      const r = this.start("daily", "p1", info.seed);
+      r.chapters = [info.chapter];
+      r.hp = 3; r.maxHp = 3;
+      r.daily = { key: info.key, rule: info.rule.id };
+      this.current = r;
+      this.rollRoute(new BP.XRand(info.seed));
+      return r;
+    },
 
     start(mode, paddleId, seed) {
       const rng = new BP.XRand(seed || (Date.now() & 0x7fffffff));
@@ -153,6 +197,8 @@
         for (let i = 0; i < CT.CHAPTERS.length; i++) chapters.push(i);
       } else if (mode === "endless") {
         chapters.push(0);
+      } else if (mode === "daily") {
+        chapters.push((seed || 0) % CT.CHAPTERS.length);
       } else {
         const pool = [0, 1, 2, 3, 4, 5];
         for (let i = pool.length - 1; i > 0; i--) { const j = rng.int(0, i); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
@@ -275,6 +321,10 @@
       }
       for (const s of this.activeSynergies()) addMods(out, s.mods);
       addMods(out, r.permanent);
+      if (r.mode === "daily" && r.daily) {
+        const rule = DAILY_RULES.find((x) => x.id === r.daily.rule);
+        if (rule) addMods(out, rule.mods);
+      }
       out.paddleW = Math.max(70, out.paddleW);
       out.maxSpeed = Math.min(1400, out.maxSpeed);
       return out;
@@ -365,7 +415,8 @@
       if (!r) return null;
       if (!win) return { end: true, reason: "defeat" };
       r.clearedNodes++;
-      const gold = Math.round((18 + r.row * 6 + (r.route[r.row] && r.route[r.row][0] === "elite" ? 30 : 0)) * (1 + (this.mods().goldBonus || 0)));
+      let gold = Math.round((18 + r.row * 6 + (r.route[r.row] && r.route[r.row][0] === "elite" ? 30 : 0)) * (1 + (this.mods().goldBonus || 0)));
+      if (summary && summary.pickedGold) gold += summary.pickedGold;
       r.gold += gold;
       const ups = this.gainXp(6 + r.row * 3);
       State.meta.totalBricks += summary ? summary.bricks : 0;
@@ -375,13 +426,13 @@
     },
 
     // Boss 结算
-    finishBoss(win) {
+    finishBoss(win, summary) {
       const r = this.current;
       if (!r) return null;
       if (!win) return { end: true, reason: "defeat" };
       Meta.seeCodex("bosses", (CT.BOSSES[this.chapterIdx()] || {}).id);
       State.meta.bestChapter = Math.max(State.meta.bestChapter || 0, r.chapterPos + 1);
-      r.gold += 60;
+      r.gold += 60 + ((summary && summary.pickedGold) || 0);
       this.gainXp(20);
       if (r.mode === "endless") {
         r.endlessFloor++;
@@ -422,6 +473,6 @@
     },
   };
 
-  root.STATE = { State, Meta, Run, Classic, ACHIEVEMENTS, UNLOCKS, SAVE_KEY, SAVE_VER, addMods, defaults };
+  root.STATE = { State, Meta, Run, Classic, ACHIEVEMENTS, UNLOCKS, SAVE_KEY, SAVE_VER, addMods, defaults, DAILY_RULES };
   if (typeof module !== "undefined" && module.exports) module.exports = root.STATE;
 })(typeof globalThis !== "undefined" ? globalThis : this);

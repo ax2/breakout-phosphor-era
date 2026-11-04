@@ -40,6 +40,9 @@ html, body {
   position: relative;
   width: 1280px;
   height: 720px;
+  /* #fit 是 flex 容器：不加这句，窄屏（手机横屏/小窗口）会把舞台压扁到视口宽度，
+     导致画布右侧被 overflow 裁掉。缩放统一交给 transform 处理。 */
+  flex: 0 0 auto;
   transform-origin: center center;
   overflow: hidden;
   background: var(--bg);
@@ -319,7 +322,16 @@ html, body {
 .tabs { display: flex; gap: 8px; margin: 14px 0 10px; }
 .tab { padding: 6px 14px; font-size: 12px; letter-spacing: 1px; cursor: pointer; border: 1px solid rgba(124,255,178,0.2); color: var(--dim); }
 .tab.on { color: #7cffb2; border-color: rgba(124,255,178,0.7); background: rgba(16,38,31,0.7); }
-.codex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; max-height: 380px; overflow: auto; padding-right: 6px; }
+/* #stage 设了 touch-action: none（游戏中不能被浏览器手势打断），
+   但图鉴要能滚，必须在这里把纵向滚动还回去，否则手机上滑不动。 */
+.codex-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px;
+  max-height: 380px; overflow: auto; padding-right: 6px;
+  touch-action: pan-y; overscroll-behavior: contain;
+}
+.codex-grid::-webkit-scrollbar { width: 6px; }
+.codex-grid::-webkit-scrollbar-thumb { background: rgba(124,255,178,0.28); }
+.codex-grid::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
 .codex-item { font-size: 12px; color: rgba(216,255,240,0.8); padding: 6px 8px; border-left: 2px solid rgba(124,255,178,0.2); }
 .codex-item b { display: block; font-size: 13px; font-weight: 400; color: var(--text); }
 .codex-item span { color: var(--dim); }
@@ -348,3 +360,55 @@ html, body {
 .cards.four .card .preview { margin-top: 6px; transform: scale(0.92); transform-origin: top left; }
 .cards.four .card .idx { font-size: 22px; }
 .pv-row { display: grid; grid-template-columns: repeat(12, 7px); gap: 1px; height: 4px; }
+
+/* ============================================================ 平台适配
+ * 三端共用同一份 1280×720 逻辑画布：
+ * 桌面靠鼠标/键盘，移动端靠触屏相对拖动 + 安全区留白 + 更厚的 HUD。
+ */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
+#stage { touch-action: none; }
+
+/* 移动端：屏幕小、手指粗，HUD 与按钮整体放大一档 */
+body.touch #hud { height: 64px; }
+body.touch .hud-label { font-size: 12px; }
+body.touch .hud-score { font-size: 20px; }
+body.touch .hud-title { font-size: 17px; }
+body.touch .hud-meta { font-size: 14px; }
+body.touch .pip { width: 18px; height: 10px; }
+/* 触屏下按钮物理尺寸约等于 逻辑尺寸 × 缩放比（手机横屏约 0.54），
+   52 逻辑像素只剩 28 物理像素，够不到；这里抬到 ~72 让它落在可点范围内。 */
+body.touch .btn { min-height: 72px; font-size: 20px; padding: 0 26px; }
+body.touch .menu-btns { gap: 14px; }
+body.touch .menu-btns .btn { width: 340px; }
+body.touch .pick-card { min-height: 196px; }
+body.touch .pick-card .pname { font-size: 22px; }
+body.touch .pick-card .pdesc { font-size: 15px; }
+body.touch .node-card { min-height: 190px; }
+body.touch .evt-opt { padding: 16px 18px; font-size: 16px; }
+
+/* 刘海屏：把整个舞台往安全区内缩，避免被圆角/状态栏切掉 */
+body.touch #fit {
+  padding: calc(var(--sat) + 4px) calc(var(--sar) + 4px) calc(var(--sab) + 4px) calc(var(--sal) + 4px);
+}
+
+#rotate {
+  background: radial-gradient(ellipse at 50% 40%, #08130f 0%, #020403 80%);
+  z-index: 900;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--phos);
+  letter-spacing: 4px;
+}
+
+/* 移动端：不显示"网页滚动"式的选择光标 */
+@media (pointer: coarse) {
+  html, body { cursor: default; }
+  #stage { cursor: none; }
+}

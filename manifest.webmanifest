@@ -1,0 +1,19 @@
+{
+  "name": "BREAKOUT：磷光纪元",
+  "short_name": "磷光纪元",
+  "description": "手工关卡打砖块：48 关、6 个砖块 Boss、远征构筑。",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#05080a",
+  "theme_color": "#05080a",
+  "categories": ["games"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
