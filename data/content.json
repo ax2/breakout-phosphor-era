@@ -1,0 +1,2433 @@
+{
+  "schema": 1,
+  "source": "web/js/content.js",
+  "legend": {
+    "#": "normal",
+    "T": "tough",
+    "A": "armored",
+    "B": "blast",
+    "X": "solid",
+    "R": "regen",
+    "S": "shieldNode"
+  },
+  "chapters": [
+    {
+      "id": "ch1",
+      "index": 1,
+      "name": "旧式终端",
+      "code": "LEGACY TERMINAL",
+      "accent": "#7cffb2",
+      "brief": "磷光屏上的第一课：规则简单，反弹诚实。"
+    },
+    {
+      "id": "ch2",
+      "index": 2,
+      "name": "熔炉工厂",
+      "code": "FORGE WORKS",
+      "accent": "#ffa35c",
+      "brief": "高温、爆裂与厚甲，节奏开始变紧。"
+    },
+    {
+      "id": "ch3",
+      "index": 3,
+      "name": "冰晶回廊",
+      "code": "CRYO GALLERY",
+      "accent": "#7fd8ff",
+      "brief": "冻结会放大伤害，也会冻住你的节奏。"
+    },
+    {
+      "id": "ch4",
+      "index": 4,
+      "name": "电磁网络",
+      "code": "GRID NETWORK",
+      "accent": "#b39cff",
+      "brief": "导电与节点，让一次命中传成一串。"
+    },
+    {
+      "id": "ch5",
+      "index": 5,
+      "name": "折跃空间",
+      "code": "WARP SPACE",
+      "accent": "#8ab4ff",
+      "brief": "错位与缺口，反弹路线不再笔直。"
+    },
+    {
+      "id": "ch6",
+      "index": 6,
+      "name": "核心主机",
+      "code": "CORE HOST",
+      "accent": "#ff6b7e",
+      "brief": "所有机制的合流，主机在看着你。"
+    }
+  ],
+  "levels": [
+    {
+      "id": "c1_01",
+      "chapter": "ch1",
+      "index": 1,
+      "name": "冷启动",
+      "codename": "COLD BOOT",
+      "teach": "接球与边缘角度",
+      "speed": 524,
+      "lives": 3,
+      "rows": [
+        "..########..",
+        "..########..",
+        "............",
+        "..##....##..",
+        "..########.."
+      ]
+    },
+    {
+      "id": "c1_02",
+      "chapter": "ch1",
+      "index": 2,
+      "name": "斜角",
+      "codename": "OBLIQUE",
+      "teach": "用挡板位置控制反射角",
+      "speed": 528,
+      "lives": 3,
+      "rows": [
+        "#..##..##..#",
+        ".##..##..##.",
+        "#..##..##..#",
+        ".##..##..##."
+      ]
+    },
+    {
+      "id": "c1_03",
+      "chapter": "ch1",
+      "index": 3,
+      "name": "双塔",
+      "codename": "TWIN TOWERS",
+      "teach": "竖直通道与侧向切入",
+      "speed": 532,
+      "lives": 3,
+      "rows": [
+        "###......###",
+        "###......###",
+        "###......###",
+        "...##..##...",
+        "...##..##..."
+      ]
+    },
+    {
+      "id": "c1_04",
+      "chapter": "ch1",
+      "index": 4,
+      "name": "阶梯",
+      "codename": "STAIRCASE",
+      "teach": "逐层抬高的落点",
+      "speed": 536,
+      "lives": 3,
+      "rows": [
+        "..........##",
+        "........##..",
+        "......##....",
+        "....##......",
+        "..##........"
+      ]
+    },
+    {
+      "id": "c1_05",
+      "chapter": "ch1",
+      "index": 5,
+      "name": "装甲层",
+      "codename": "ARMOR PLATE",
+      "teach": "耐久差异：先拆壳再打核心",
+      "speed": 540,
+      "lives": 3,
+      "rows": [
+        "XX........XX",
+        "..TTTTTTTT..",
+        "..TAAAAAAT..",
+        "..TTTTTTTT.."
+      ]
+    },
+    {
+      "id": "c1_06",
+      "chapter": "ch1",
+      "index": 6,
+      "name": "回廊",
+      "codename": "CORRIDOR",
+      "teach": "狭窄通道里的连续反弹",
+      "speed": 544,
+      "lives": 3,
+      "rows": [
+        "X..........X",
+        "X.##....##.X",
+        "X.##....##.X",
+        "X..........X",
+        "X.########.X"
+      ]
+    },
+    {
+      "id": "c1_07",
+      "chapter": "ch1",
+      "index": 7,
+      "name": "熔渣区",
+      "codename": "SLAG FIELD",
+      "teach": "爆裂连锁与不可破坏柱",
+      "speed": 548,
+      "lives": 3,
+      "rows": [
+        "............",
+        ".BB......BB.",
+        ".TT..XX..TT.",
+        ".BB..XX..BB.",
+        "....####...."
+      ]
+    },
+    {
+      "id": "c1_08",
+      "chapter": "ch1",
+      "index": 8,
+      "name": "窄门",
+      "codename": "NARROW GATE",
+      "teach": "穿窗口精确击打残余目标",
+      "speed": 552,
+      "lives": 3,
+      "rows": [
+        "X.#..##..#.X",
+        "X..X....X..X",
+        "X.#..##..#.X",
+        "X..X....X..X",
+        "X.#..##..#.X"
+      ]
+    },
+    {
+      "id": "c2_01",
+      "chapter": "ch2",
+      "index": 1,
+      "name": "预热",
+      "codename": "PREHEAT",
+      "teach": "厚甲与爆裂的第一次组合",
+      "speed": 542,
+      "lives": 3,
+      "rows": [
+        "...TTTTTT...",
+        "..TBBBBBBT..",
+        "..TAAAAAAT..",
+        "...TTTTTT..."
+      ]
+    },
+    {
+      "id": "c2_02",
+      "chapter": "ch2",
+      "index": 2,
+      "name": "炉膛",
+      "codename": "FURNACE",
+      "teach": "被爆裂砖夹住的核心",
+      "speed": 546,
+      "lives": 3,
+      "rows": [
+        "....BBBB....",
+        "..AA....AA..",
+        "..AA.BB.AA..",
+        "..AA....AA..",
+        "....BBBB...."
+      ]
+    },
+    {
+      "id": "c2_03",
+      "chapter": "ch2",
+      "index": 3,
+      "name": "烟道",
+      "codename": "FLUES",
+      "teach": "三条竖井，落点受限",
+      "speed": 550,
+      "lives": 3,
+      "rows": [
+        "##..##..##..",
+        "##..##..##..",
+        "##..##..##..",
+        "....##..##..",
+        "....##..##.."
+      ]
+    },
+    {
+      "id": "c2_04",
+      "chapter": "ch2",
+      "index": 4,
+      "name": "坩埚",
+      "codename": "CRUCIBLE",
+      "teach": "中心高耐久，四周易爆",
+      "speed": 554,
+      "lives": 3,
+      "rows": [
+        ".BB......BB.",
+        ".B.AAAAAA.B.",
+        "...AXXXXA...",
+        ".B.AAAAAA.B.",
+        ".BB......BB."
+      ]
+    },
+    {
+      "id": "c2_05",
+      "chapter": "ch2",
+      "index": 5,
+      "name": "传送带",
+      "codename": "CONVEYOR",
+      "teach": "斜向排列的装甲带",
+      "speed": 558,
+      "lives": 3,
+      "rows": [
+        "AAA.........",
+        ".AAA........",
+        "..AAA.......",
+        "...AAA......",
+        "....AAA....."
+      ]
+    },
+    {
+      "id": "c2_06",
+      "chapter": "ch2",
+      "index": 6,
+      "name": "过热",
+      "codename": "OVERHEAT",
+      "teach": "密集爆裂，注意连锁顺序",
+      "speed": 562,
+      "lives": 3,
+      "rows": [
+        "BB.BB.BB.BB.",
+        "............",
+        "BB.BB.BB.BB.",
+        "...TTTTTT...",
+        "....TTTT...."
+      ]
+    },
+    {
+      "id": "c2_07",
+      "chapter": "ch2",
+      "index": 7,
+      "name": "钢梁",
+      "codename": "GIRDERS",
+      "teach": "不可破坏梁切断路线",
+      "speed": 566,
+      "lives": 3,
+      "rows": [
+        "XXXXXXXXXXXX",
+        "....TTTT....",
+        "....TTTT....",
+        "XX........XX",
+        "....TTTT...."
+      ]
+    },
+    {
+      "id": "c2_08",
+      "chapter": "ch2",
+      "index": 8,
+      "name": "出炉",
+      "codename": "TAPPING",
+      "teach": "综合考验",
+      "speed": 570,
+      "lives": 3,
+      "rows": [
+        "..AA....AA..",
+        "..AABBBBAA..",
+        "..AA....AA..",
+        ".TT..XX..TT.",
+        ".BB......BB."
+      ]
+    },
+    {
+      "id": "c3_01",
+      "chapter": "ch3",
+      "index": 1,
+      "name": "霜降",
+      "codename": "FIRST FROST",
+      "teach": "再生砖：必须在再生前打穿",
+      "speed": 560,
+      "lives": 3,
+      "rows": [
+        "..RRRRRRRR..",
+        "..R##..##R..",
+        "..RRRRRRRR.."
+      ]
+    },
+    {
+      "id": "c3_02",
+      "chapter": "ch3",
+      "index": 2,
+      "name": "棱镜",
+      "codename": "PRISM",
+      "teach": "斜向晶体阵列",
+      "speed": 564,
+      "lives": 3,
+      "rows": [
+        "..R.........",
+        "...R........",
+        "....RRRR....",
+        "........R...",
+        ".........R.."
+      ]
+    },
+    {
+      "id": "c3_03",
+      "chapter": "ch3",
+      "index": 3,
+      "name": "冰墙",
+      "codename": "ICE WALL",
+      "teach": "不可破坏墙后的目标",
+      "speed": 568,
+      "lives": 3,
+      "rows": [
+        "XX........XX",
+        "..RRRRRRRR..",
+        "..X......X..",
+        "..R.RRRR.R..",
+        "..X......X.."
+      ]
+    },
+    {
+      "id": "c3_04",
+      "chapter": "ch3",
+      "index": 4,
+      "name": "双面",
+      "codename": "TWO FACES",
+      "teach": "两侧对称，中央脆弱",
+      "speed": 572,
+      "lives": 3,
+      "rows": [
+        "RRR......RRR",
+        "R.R......R.R",
+        "RRR..##..RRR",
+        ".....TT.....",
+        "....AAAA...."
+      ]
+    },
+    {
+      "id": "c3_05",
+      "chapter": "ch3",
+      "index": 5,
+      "name": "冻湖",
+      "codename": "FROZEN LAKE",
+      "teach": "大片再生砖，考验持续输出",
+      "speed": 576,
+      "lives": 3,
+      "rows": [
+        "RRRRRRRRRRRR",
+        "RRRRRRRRRRRR",
+        "..RRRRRRRR.."
+      ]
+    },
+    {
+      "id": "c3_06",
+      "chapter": "ch3",
+      "index": 6,
+      "name": "冰锥",
+      "codename": "ICICLES",
+      "teach": "向下的尖刺结构",
+      "speed": 580,
+      "lives": 3,
+      "rows": [
+        "A..A..A..A..",
+        ".A..A..A..A.",
+        "..A..A..A..A",
+        "...A..A..A..",
+        "....A..A...."
+      ]
+    },
+    {
+      "id": "c3_07",
+      "chapter": "ch3",
+      "index": 7,
+      "name": "雾区",
+      "codename": "WHITEOUT",
+      "teach": "低密度目标，容易空转",
+      "speed": 584,
+      "lives": 3,
+      "rows": [
+        "R..........R",
+        "............",
+        "..R......R..",
+        "............",
+        "....R..R...."
+      ]
+    },
+    {
+      "id": "c3_08",
+      "chapter": "ch3",
+      "index": 8,
+      "name": "冰核",
+      "codename": "ICE CORE",
+      "teach": "再生核心 + 厚壳",
+      "speed": 588,
+      "lives": 3,
+      "rows": [
+        "..TTTTTTTT..",
+        ".TRRRRRRRRT.",
+        ".TRAAAAAART.",
+        "..TTTTTTTT.."
+      ]
+    },
+    {
+      "id": "c4_01",
+      "chapter": "ch4",
+      "index": 1,
+      "name": "接线",
+      "codename": "WIRING",
+      "teach": "护盾节点：打掉才开窗",
+      "speed": 578,
+      "lives": 3,
+      "rows": [
+        "..S......S..",
+        "..##########",
+        "............",
+        "..##########",
+        "..S......S.."
+      ]
+    },
+    {
+      "id": "c4_02",
+      "chapter": "ch4",
+      "index": 2,
+      "name": "并联",
+      "codename": "PARALLEL",
+      "teach": "两条回路",
+      "speed": 582,
+      "lives": 3,
+      "rows": [
+        "S..........S",
+        ".##########.",
+        "............",
+        ".##########.",
+        "S..........S"
+      ]
+    },
+    {
+      "id": "c4_03",
+      "chapter": "ch4",
+      "index": 3,
+      "name": "电阻",
+      "codename": "RESISTOR",
+      "teach": "高耐久节点",
+      "speed": 586,
+      "lives": 3,
+      "rows": [
+        "....SSSS....",
+        "..AAAAAAAA..",
+        "..A......A..",
+        "..AAAAAAAA..",
+        "....SSSS...."
+      ]
+    },
+    {
+      "id": "c4_04",
+      "chapter": "ch4",
+      "index": 4,
+      "name": "短路",
+      "codename": "SHORT CIRCUIT",
+      "teach": "爆裂 + 节点",
+      "speed": 590,
+      "lives": 3,
+      "rows": [
+        "..BB....BB..",
+        "..S......S..",
+        "....AAAA....",
+        "..BB....BB.."
+      ]
+    },
+    {
+      "id": "c4_05",
+      "chapter": "ch4",
+      "index": 5,
+      "name": "矩阵",
+      "codename": "MATRIX",
+      "teach": "网格状节点",
+      "speed": 594,
+      "lives": 3,
+      "rows": [
+        "S..S..S..S..",
+        ".##########.",
+        "S..S..S..S..",
+        ".##########.",
+        "S..S..S..S.."
+      ]
+    },
+    {
+      "id": "c4_06",
+      "chapter": "ch4",
+      "index": 6,
+      "name": "中继",
+      "codename": "RELAY",
+      "teach": "中央核心被节点保护",
+      "speed": 598,
+      "lives": 3,
+      "rows": [
+        "..S......S..",
+        "..S.TTTT.S..",
+        "..S.TAAT.S..",
+        "..S.TTTT.S..",
+        "..S......S.."
+      ]
+    },
+    {
+      "id": "c4_07",
+      "chapter": "ch4",
+      "index": 7,
+      "name": "过载",
+      "codename": "OVERLOAD",
+      "teach": "密集导电体",
+      "speed": 602,
+      "lives": 3,
+      "rows": [
+        "############",
+        "BBBBBBBBBBBB",
+        "############",
+        "BBBBBBBBBBBB"
+      ]
+    },
+    {
+      "id": "c4_08",
+      "chapter": "ch4",
+      "index": 8,
+      "name": "电网",
+      "codename": "THE GRID",
+      "teach": "综合",
+      "speed": 606,
+      "lives": 3,
+      "rows": [
+        "S.BB.BB.BB.S",
+        "..AAAAAAAA..",
+        "S.BB.BB.BB.S",
+        "..TTTTTTTT.."
+      ]
+    },
+    {
+      "id": "c5_01",
+      "chapter": "ch5",
+      "index": 1,
+      "name": "错位",
+      "codename": "DISPLACED",
+      "teach": "缺口迫使改变反弹角度",
+      "speed": 596,
+      "lives": 3,
+      "rows": [
+        "###..###..##",
+        "###..###..##",
+        "..##..###..#",
+        "..##..###..#"
+      ]
+    },
+    {
+      "id": "c5_02",
+      "chapter": "ch5",
+      "index": 2,
+      "name": "门框",
+      "codename": "DOORFRAME",
+      "teach": "穿越中央窗口",
+      "speed": 600,
+      "lives": 3,
+      "rows": [
+        "XXXX....XXXX",
+        "..##....##..",
+        "..##....##..",
+        "XXXX....XXXX",
+        "..##....##.."
+      ]
+    },
+    {
+      "id": "c5_03",
+      "chapter": "ch5",
+      "index": 3,
+      "name": "折跃点",
+      "codename": "WARP POINT",
+      "teach": "密集小方块",
+      "speed": 604,
+      "lives": 3,
+      "rows": [
+        ".#.#.#.#.#.#",
+        "#.#.#.#.#.#.",
+        ".#.#.#.#.#.#",
+        "#.#.#.#.#.#."
+      ]
+    },
+    {
+      "id": "c5_04",
+      "chapter": "ch5",
+      "index": 4,
+      "name": "断层",
+      "codename": "FAULT LINE",
+      "teach": "斜向断层",
+      "speed": 608,
+      "lives": 3,
+      "rows": [
+        "A...........",
+        "AA..........",
+        ".AA.........",
+        "..AA........",
+        "...AA.......",
+        "....AA......"
+      ]
+    },
+    {
+      "id": "c5_05",
+      "chapter": "ch5",
+      "index": 5,
+      "name": "回环",
+      "codename": "LOOP",
+      "teach": "环形结构",
+      "speed": 612,
+      "lives": 3,
+      "rows": [
+        "..########..",
+        ".#........#.",
+        ".#.XXXXXX.#.",
+        ".#........#.",
+        "..########.."
+      ]
+    },
+    {
+      "id": "c5_06",
+      "chapter": "ch5",
+      "index": 6,
+      "name": "相位",
+      "codename": "PHASE SHIFT",
+      "teach": "交错双层",
+      "speed": 616,
+      "lives": 3,
+      "rows": [
+        "##..##..##..",
+        "..##..##..##",
+        "##..##..##..",
+        "..##..##..##",
+        "##..##..##.."
+      ]
+    },
+    {
+      "id": "c5_07",
+      "chapter": "ch5",
+      "index": 7,
+      "name": "迷宫",
+      "codename": "MAZE",
+      "teach": "通道考验控球",
+      "speed": 620,
+      "lives": 3,
+      "rows": [
+        "X.XXX.XXX.XX",
+        "X.T.X.T.X..X",
+        "XXX.X.XXX.XX",
+        "X.T.X.T.X..X",
+        "X.XXX.XXX.XX"
+      ]
+    },
+    {
+      "id": "c5_08",
+      "chapter": "ch5",
+      "index": 8,
+      "name": "跃迁",
+      "codename": "JUMP",
+      "teach": "综合",
+      "speed": 624,
+      "lives": 3,
+      "rows": [
+        "....AAAA....",
+        "..XX....XX..",
+        "..BB.AA.BB..",
+        "..XX....XX..",
+        "....AAAA...."
+      ]
+    },
+    {
+      "id": "c6_01",
+      "chapter": "ch6",
+      "index": 1,
+      "name": "防火墙",
+      "codename": "FIREWALL",
+      "teach": "厚甲与节点",
+      "speed": 614,
+      "lives": 3,
+      "rows": [
+        "S..AAAAAA..S",
+        "S..AAAAAA..S",
+        "...TTTTTT...",
+        "............",
+        "..BB....BB.."
+      ]
+    },
+    {
+      "id": "c6_02",
+      "chapter": "ch6",
+      "index": 2,
+      "name": "内核",
+      "codename": "KERNEL",
+      "teach": "保护核心",
+      "speed": 618,
+      "lives": 3,
+      "rows": [
+        "..TTTTTTTT..",
+        "..TSSSSSST..",
+        "..TSAAAAST..",
+        "..TSSSSSST..",
+        "..TTTTTTTT.."
+      ]
+    },
+    {
+      "id": "c6_03",
+      "chapter": "ch6",
+      "index": 3,
+      "name": "缓存",
+      "codename": "CACHE",
+      "teach": "再生 + 装甲",
+      "speed": 622,
+      "lives": 3,
+      "rows": [
+        "RRRRRRRRRRRR",
+        "RAAAAAAAAAAR",
+        "RARRRRRRRRAR",
+        "RAAAAAAAAAAR",
+        "RRRRRRRRRRRR"
+      ]
+    },
+    {
+      "id": "c6_04",
+      "chapter": "ch6",
+      "index": 4,
+      "name": "中断",
+      "codename": "INTERRUPT",
+      "teach": "缝隙中的目标",
+      "speed": 626,
+      "lives": 3,
+      "rows": [
+        "XX.XX.XX.XX.",
+        "..BB....BB..",
+        "XX.XX.XX.XX.",
+        "..AA....AA..",
+        "XX.XX.XX.XX."
+      ]
+    },
+    {
+      "id": "c6_05",
+      "chapter": "ch6",
+      "index": 5,
+      "name": "守护进程",
+      "codename": "DAEMON",
+      "teach": "节点网络",
+      "speed": 630,
+      "lives": 3,
+      "rows": [
+        "S.S.S.S.S.S.",
+        ".AAAAAAAAAA.",
+        "S.S.S.S.S.S.",
+        ".BB.BB.BB.BB"
+      ]
+    },
+    {
+      "id": "c6_06",
+      "chapter": "ch6",
+      "index": 6,
+      "name": "堆栈",
+      "codename": "STACK",
+      "teach": "层层堆叠",
+      "speed": 634,
+      "lives": 3,
+      "rows": [
+        "############",
+        "TTTTTTTTTTTT",
+        "BBBBBBBBBBBB",
+        "AAAAAAAAAAAA",
+        "RRRRRRRRRRRR"
+      ]
+    },
+    {
+      "id": "c6_07",
+      "chapter": "ch6",
+      "index": 7,
+      "name": "死锁",
+      "codename": "DEADLOCK",
+      "teach": "不可破坏结构",
+      "speed": 638,
+      "lives": 3,
+      "rows": [
+        "X.XXXXXXXX.X",
+        "X..........X",
+        "X.AAAAAAAA.X",
+        "X..........X",
+        "X.XXXXXXXX.X"
+      ]
+    },
+    {
+      "id": "c6_08",
+      "chapter": "ch6",
+      "index": 8,
+      "name": "主机",
+      "codename": "THE HOST",
+      "teach": "最终考验",
+      "speed": 642,
+      "lives": 3,
+      "rows": [
+        "AAAA....AAAA",
+        "A.SS....SS.A",
+        "..BB.AA.BB..",
+        "A.SS....SS.A",
+        "AAAA....AAAA"
+      ]
+    }
+  ],
+  "bosses": [
+    {
+      "id": "b1",
+      "chapter": "ch1",
+      "name": "终端守卫",
+      "code": "TERMINAL WARDEN",
+      "hp": 44,
+      "brief": "旋转护甲把核心围住。打掉任意两块护甲，核心才会暴露。",
+      "behavior": "b1",
+      "parts": [
+        {
+          "id": "core",
+          "role": "core",
+          "type": "core",
+          "x": -60,
+          "y": -30,
+          "w": 120,
+          "h": 60,
+          "hp": 44,
+          "invuln": true,
+          "regen": 0
+        },
+        {
+          "id": "a1",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": -150,
+          "y": -80,
+          "w": 70,
+          "h": 24,
+          "hp": 8,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "a2",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 80,
+          "y": -80,
+          "w": 70,
+          "h": 24,
+          "hp": 8,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "a3",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": -150,
+          "y": 56,
+          "w": 70,
+          "h": 24,
+          "hp": 8,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "a4",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 80,
+          "y": 56,
+          "w": 70,
+          "h": 24,
+          "hp": 8,
+          "invuln": false,
+          "regen": 0
+        }
+      ],
+      "phases": [
+        {
+          "at": 1,
+          "name": "护甲展开",
+          "coreInvuln": true,
+          "armorInvuln": false
+        },
+        {
+          "at": 0.5,
+          "name": "过载：转速提升",
+          "coreInvuln": false,
+          "armorInvuln": false
+        }
+      ]
+    },
+    {
+      "id": "b2",
+      "chapter": "ch2",
+      "name": "熔炉巨像",
+      "code": "FORGE COLOSSUS",
+      "hp": 62,
+      "brief": "每次命中共振都会升温。热量满时进入过载，受到的伤害翻倍。",
+      "behavior": "b2",
+      "parts": [
+        {
+          "id": "core",
+          "role": "core",
+          "type": "core",
+          "x": -70,
+          "y": -40,
+          "w": 140,
+          "h": 80,
+          "hp": 62,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "h1",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": -190,
+          "y": -20,
+          "w": 60,
+          "h": 60,
+          "hp": 12,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "h2",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 130,
+          "y": -20,
+          "w": 60,
+          "h": 60,
+          "hp": 12,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "h3",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": -40,
+          "y": 70,
+          "w": 80,
+          "h": 22,
+          "hp": 10,
+          "invuln": false,
+          "regen": 0
+        }
+      ],
+      "phases": [
+        {
+          "at": 1,
+          "name": "点火",
+          "coreInvuln": false,
+          "armorInvuln": false
+        },
+        {
+          "at": 0.6,
+          "name": "炉压升高",
+          "coreInvuln": false,
+          "armorInvuln": false
+        },
+        {
+          "at": 0.25,
+          "name": "临界：场地升温",
+          "coreInvuln": false,
+          "armorInvuln": false
+        }
+      ]
+    },
+    {
+      "id": "b3",
+      "chapter": "ch3",
+      "name": "冰镜双核",
+      "code": "MIRROR TWINS",
+      "hp": 56,
+      "brief": "两个核心轮流被冰镜保护。打碎当前镜子，窗口只开 6 秒。",
+      "behavior": "b3",
+      "parts": [
+        {
+          "id": "c1",
+          "role": "core",
+          "type": "core",
+          "x": -150,
+          "y": -30,
+          "w": 110,
+          "h": 60,
+          "hp": 28,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "c2",
+          "role": "core",
+          "type": "core",
+          "x": 40,
+          "y": -30,
+          "w": 110,
+          "h": 60,
+          "hp": 28,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "m1",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": -160,
+          "y": -34,
+          "w": 130,
+          "h": 68,
+          "hp": 10,
+          "invuln": true,
+          "regen": 0
+        },
+        {
+          "id": "m2",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 30,
+          "y": -34,
+          "w": 130,
+          "h": 68,
+          "hp": 10,
+          "invuln": true,
+          "regen": 0
+        }
+      ],
+      "phases": [
+        {
+          "at": 1,
+          "name": "双镜闭合",
+          "coreInvuln": true,
+          "armorInvuln": false
+        },
+        {
+          "at": 0.5,
+          "name": "镜面碎裂",
+          "coreInvuln": false,
+          "armorInvuln": false
+        }
+      ]
+    },
+    {
+      "id": "b4",
+      "chapter": "ch4",
+      "name": "电网织者",
+      "code": "GRID WEAVER",
+      "hp": 58,
+      "brief": "四个供能节点维持护盾。每切断一个节点，核心暴露 4 秒。",
+      "behavior": "b4",
+      "parts": [
+        {
+          "id": "core",
+          "role": "core",
+          "type": "core",
+          "x": -60,
+          "y": -30,
+          "w": 120,
+          "h": 60,
+          "hp": 58,
+          "invuln": true,
+          "regen": 0
+        },
+        {
+          "id": "n1",
+          "role": "armor",
+          "type": "shieldNode",
+          "x": -220,
+          "y": -70,
+          "w": 56,
+          "h": 44,
+          "hp": 6,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "n2",
+          "role": "armor",
+          "type": "shieldNode",
+          "x": 164,
+          "y": -70,
+          "w": 56,
+          "h": 44,
+          "hp": 6,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "n3",
+          "role": "armor",
+          "type": "shieldNode",
+          "x": -220,
+          "y": 30,
+          "w": 56,
+          "h": 44,
+          "hp": 6,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "n4",
+          "role": "armor",
+          "type": "shieldNode",
+          "x": 164,
+          "y": 30,
+          "w": 56,
+          "h": 44,
+          "hp": 6,
+          "invuln": false,
+          "regen": 0
+        }
+      ],
+      "phases": [
+        {
+          "at": 1,
+          "name": "电网闭合",
+          "coreInvuln": true,
+          "armorInvuln": false
+        },
+        {
+          "at": 0.55,
+          "name": "电压不稳",
+          "coreInvuln": false,
+          "armorInvuln": false
+        }
+      ]
+    },
+    {
+      "id": "b5",
+      "chapter": "ch5",
+      "name": "折跃巨蛇",
+      "code": "WARP SERPENT",
+      "hp": 70,
+      "brief": "由九节组成的蛇身沿正弦路径游动。只有头部是弱点，身体会缓慢再生。",
+      "behavior": "b5",
+      "parts": [
+        {
+          "id": "head",
+          "role": "core",
+          "type": "weakPoint",
+          "x": 0,
+          "y": -110,
+          "w": 74,
+          "h": 54,
+          "hp": 32,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "s0",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 0,
+          "y": 0,
+          "w": 52,
+          "h": 26,
+          "hp": 5,
+          "invuln": false,
+          "regen": 1
+        },
+        {
+          "id": "s1",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 0,
+          "y": 0,
+          "w": 52,
+          "h": 26,
+          "hp": 5,
+          "invuln": false,
+          "regen": 1
+        },
+        {
+          "id": "s2",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 0,
+          "y": 0,
+          "w": 52,
+          "h": 26,
+          "hp": 5,
+          "invuln": false,
+          "regen": 1
+        },
+        {
+          "id": "s3",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 0,
+          "y": 0,
+          "w": 52,
+          "h": 26,
+          "hp": 5,
+          "invuln": false,
+          "regen": 1
+        },
+        {
+          "id": "s4",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 0,
+          "y": 0,
+          "w": 52,
+          "h": 26,
+          "hp": 5,
+          "invuln": false,
+          "regen": 1
+        },
+        {
+          "id": "s5",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 0,
+          "y": 0,
+          "w": 52,
+          "h": 26,
+          "hp": 5,
+          "invuln": false,
+          "regen": 1
+        },
+        {
+          "id": "s6",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 0,
+          "y": 0,
+          "w": 52,
+          "h": 26,
+          "hp": 5,
+          "invuln": false,
+          "regen": 1
+        },
+        {
+          "id": "s7",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 0,
+          "y": 0,
+          "w": 52,
+          "h": 26,
+          "hp": 5,
+          "invuln": false,
+          "regen": 1
+        }
+      ],
+      "phases": [
+        {
+          "at": 1,
+          "name": "苏醒",
+          "coreInvuln": false,
+          "armorInvuln": false
+        },
+        {
+          "at": 0.55,
+          "name": "加速游动",
+          "coreInvuln": false,
+          "armorInvuln": false
+        },
+        {
+          "at": 0.22,
+          "name": "折跃：路径紊乱",
+          "coreInvuln": false,
+          "armorInvuln": false
+        }
+      ]
+    },
+    {
+      "id": "b6",
+      "chapter": "ch6",
+      "name": "主机之心",
+      "code": "HEART OF THE HOST",
+      "hp": 80,
+      "brief": "组合所有机制：旋转护甲、节点窗口、阶段转换。它会针对你的构筑改变护甲类型，但总有预告。",
+      "behavior": "b6",
+      "parts": [
+        {
+          "id": "core",
+          "role": "core",
+          "type": "core",
+          "x": -70,
+          "y": -35,
+          "w": 140,
+          "h": 70,
+          "hp": 80,
+          "invuln": true,
+          "regen": 0
+        },
+        {
+          "id": "a1",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": -170,
+          "y": -100,
+          "w": 90,
+          "h": 26,
+          "hp": 9,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "a2",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 80,
+          "y": -100,
+          "w": 90,
+          "h": 26,
+          "hp": 9,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "a3",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": -170,
+          "y": 74,
+          "w": 90,
+          "h": 26,
+          "hp": 9,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "a4",
+          "role": "armor",
+          "type": "armorPlate",
+          "x": 80,
+          "y": 74,
+          "w": 90,
+          "h": 26,
+          "hp": 9,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "n1",
+          "role": "armor",
+          "type": "shieldNode",
+          "x": -40,
+          "y": -110,
+          "w": 50,
+          "h": 40,
+          "hp": 7,
+          "invuln": false,
+          "regen": 0
+        },
+        {
+          "id": "n2",
+          "role": "armor",
+          "type": "shieldNode",
+          "x": -10,
+          "y": 80,
+          "w": 50,
+          "h": 40,
+          "hp": 7,
+          "invuln": false,
+          "regen": 0
+        }
+      ],
+      "phases": [
+        {
+          "at": 1,
+          "name": "主机启动",
+          "coreInvuln": true,
+          "armorInvuln": false
+        },
+        {
+          "at": 0.66,
+          "name": "第二阶段：装甲重排",
+          "coreInvuln": true,
+          "armorInvuln": false
+        },
+        {
+          "at": 0.33,
+          "name": "第三阶段：核心过载",
+          "coreInvuln": false,
+          "armorInvuln": false
+        }
+      ]
+    }
+  ],
+  "upgrades": [
+    {
+      "id": "k1",
+      "arch": "kinetic",
+      "name": "精准校准",
+      "desc": "挡板中心 18% 区域接球后，下一次碰撞必定暴击",
+      "mods": {
+        "centerCrit": true
+      }
+    },
+    {
+      "id": "k2",
+      "arch": "kinetic",
+      "name": "贯穿弹芯",
+      "desc": "每次发球可贯穿 1 块砖，贯穿结束恢复正常反弹",
+      "mods": {
+        "pierce": 1
+      }
+    },
+    {
+      "id": "k3",
+      "arch": "kinetic",
+      "name": "高速切割",
+      "desc": "基础伤害 +1",
+      "mods": {
+        "damage": 1
+      }
+    },
+    {
+      "id": "k4",
+      "arch": "kinetic",
+      "name": "暴击聚焦",
+      "desc": "暴击率 +15%，暴击倍率 +0.5",
+      "mods": {
+        "critChance": 0.15,
+        "critMult": 0.5
+      }
+    },
+    {
+      "id": "k5",
+      "arch": "kinetic",
+      "name": "反弹蓄能",
+      "desc": "每接住一次球，本颗球伤害 +1（上限 +3）",
+      "mods": {
+        "bounceDamage": 1
+      }
+    },
+    {
+      "id": "k6",
+      "arch": "kinetic",
+      "name": "极限速度",
+      "desc": "球速上限 +120，初始速度 +40",
+      "mods": {
+        "maxSpeed": 120,
+        "startSpeed": 40
+      }
+    },
+    {
+      "id": "f1",
+      "arch": "flame",
+      "name": "引燃",
+      "desc": "命中附加 1 层灼烧，每秒 2 点伤害",
+      "mods": {
+        "burn": 1,
+        "burnDps": 2
+      }
+    },
+    {
+      "id": "f2",
+      "arch": "flame",
+      "name": "爆裂涂层",
+      "desc": "18% 概率在破砖时引爆",
+      "mods": {
+        "explodeChance": 0.18
+      }
+    },
+    {
+      "id": "f3",
+      "arch": "flame",
+      "name": "火势蔓延",
+      "desc": "灼烧会传染给相邻砖块",
+      "mods": {
+        "burnSpread": 1
+      }
+    },
+    {
+      "id": "f4",
+      "arch": "flame",
+      "name": "高温核心",
+      "desc": "灼烧伤害 +4/秒",
+      "mods": {
+        "burnDps": 4
+      }
+    },
+    {
+      "id": "f5",
+      "arch": "flame",
+      "name": "余烬",
+      "desc": "伤害 +1；灼烧中的砖块被摧毁时额外爆炸",
+      "mods": {
+        "damage": 1
+      },
+      "flag": "ember"
+    },
+    {
+      "id": "f6",
+      "arch": "flame",
+      "name": "熔穿",
+      "desc": "爆炸范围 +1 格",
+      "mods": {
+        "explodeRadius": 1
+      }
+    },
+    {
+      "id": "c1",
+      "arch": "frost",
+      "name": "霜冻附着",
+      "desc": "20% 概率冻结目标 2.5 秒",
+      "mods": {
+        "freezeChance": 0.2,
+        "freezeDur": 2.5
+      }
+    },
+    {
+      "id": "c2",
+      "arch": "frost",
+      "name": "碎冰",
+      "desc": "对冻结目标伤害 +80%",
+      "mods": {
+        "shatter": 0.8
+      }
+    },
+    {
+      "id": "c3",
+      "arch": "frost",
+      "name": "绝对零度",
+      "desc": "冻结概率 +15%，持续时间 +1.5 秒",
+      "mods": {
+        "freezeChance": 0.15,
+        "freezeDur": 1.5
+      }
+    },
+    {
+      "id": "c4",
+      "arch": "frost",
+      "name": "冰墙",
+      "desc": "获得 2 层底部护盾",
+      "mods": {
+        "shieldCharges": 2
+      }
+    },
+    {
+      "id": "c5",
+      "arch": "frost",
+      "name": "寒流",
+      "desc": "冻结的砖块被摧毁时，冰冻周围 1 格",
+      "mods": {},
+      "flag": "coldSnap"
+    },
+    {
+      "id": "c6",
+      "arch": "frost",
+      "name": "慢速掌控",
+      "desc": "挡板宽度 +24",
+      "mods": {
+        "paddleW": 24
+      }
+    },
+    {
+      "id": "l1",
+      "arch": "thunder",
+      "name": "导电涂层",
+      "desc": "命中附加 1 层导电",
+      "mods": {
+        "charge": 1
+      }
+    },
+    {
+      "id": "l2",
+      "arch": "thunder",
+      "name": "电弧",
+      "desc": "摧毁带电砖块时跳跃 2 次",
+      "mods": {
+        "chainCount": 2
+      }
+    },
+    {
+      "id": "l3",
+      "arch": "thunder",
+      "name": "高压",
+      "desc": "连锁伤害 +1",
+      "mods": {
+        "chainDamage": 1
+      }
+    },
+    {
+      "id": "l4",
+      "arch": "thunder",
+      "name": "节点跳跃",
+      "desc": "连锁次数 +3",
+      "mods": {
+        "chainCount": 3
+      }
+    },
+    {
+      "id": "l5",
+      "arch": "thunder",
+      "name": "静电积累",
+      "desc": "暴击率 +10%，导电 +1",
+      "mods": {
+        "critChance": 0.1,
+        "charge": 1
+      }
+    },
+    {
+      "id": "l6",
+      "arch": "thunder",
+      "name": "雷暴",
+      "desc": "每 6 秒自动对随机砖块放电",
+      "mods": {},
+      "flag": "storm"
+    },
+    {
+      "id": "m1",
+      "arch": "split",
+      "name": "分裂",
+      "desc": "破砖时 15% 概率分裂出一颗球",
+      "mods": {
+        "splitChance": 0.15
+      }
+    },
+    {
+      "id": "m2",
+      "arch": "split",
+      "name": "复制",
+      "desc": "每关开始额外获得 1 颗球",
+      "mods": {
+        "balls": 1
+      }
+    },
+    {
+      "id": "m3",
+      "arch": "split",
+      "name": "球海",
+      "desc": "额外 2 颗球，但单球伤害 -0",
+      "mods": {
+        "balls": 2
+      }
+    },
+    {
+      "id": "m4",
+      "arch": "split",
+      "name": "球数管理",
+      "desc": "分裂概率 +10%，球速上限 +40",
+      "mods": {
+        "splitChance": 0.1,
+        "maxSpeed": 40
+      }
+    },
+    {
+      "id": "m5",
+      "arch": "split",
+      "name": "召回协议",
+      "desc": "失球时有 25% 概率补回一颗球",
+      "mods": {},
+      "flag": "recall"
+    },
+    {
+      "id": "m6",
+      "arch": "split",
+      "name": "球海战术",
+      "desc": "分裂概率 +20%，伤害 +1",
+      "mods": {
+        "splitChance": 0.2,
+        "damage": 1
+      }
+    },
+    {
+      "id": "e1",
+      "arch": "engineer",
+      "name": "激光阵列",
+      "desc": "每 3.2 秒向挡板上方最近的砖块发射激光",
+      "mods": {
+        "laserCd": 3.2,
+        "laserDamage": 1
+      }
+    },
+    {
+      "id": "e2",
+      "arch": "engineer",
+      "name": "无人机",
+      "desc": "每 2.6 秒自动攻击一块砖",
+      "mods": {
+        "drones": 1
+      }
+    },
+    {
+      "id": "e3",
+      "arch": "engineer",
+      "name": "磁吸挡板",
+      "desc": "接球后球会轻微回正",
+      "mods": {
+        "magnet": 1
+      }
+    },
+    {
+      "id": "e4",
+      "arch": "engineer",
+      "name": "护盾发生器",
+      "desc": "获得 2 层底部护盾",
+      "mods": {
+        "shieldCharges": 2
+      }
+    },
+    {
+      "id": "e5",
+      "arch": "engineer",
+      "name": "加宽挡板",
+      "desc": "挡板宽度 +28",
+      "mods": {
+        "paddleW": 28
+      }
+    },
+    {
+      "id": "e6",
+      "arch": "engineer",
+      "name": "过载协议",
+      "desc": "激光冷却 -1.2 秒，无人机 +1",
+      "mods": {
+        "laserCd": -1.2,
+        "drones": 1
+      }
+    }
+  ],
+  "relics": [
+    {
+      "id": "r1",
+      "name": "磷光核心",
+      "desc": "伤害 +1",
+      "rarity": "common",
+      "mods": {
+        "damage": 1
+      }
+    },
+    {
+      "id": "r2",
+      "name": "回声棱镜",
+      "desc": "暴击率 +8%",
+      "rarity": "common",
+      "mods": {
+        "critChance": 0.08
+      }
+    },
+    {
+      "id": "r3",
+      "name": "熔炉之心",
+      "desc": "命中附加灼烧",
+      "rarity": "rare",
+      "mods": {
+        "burn": 1,
+        "burnDps": 2
+      }
+    },
+    {
+      "id": "r4",
+      "name": "霜核",
+      "desc": "冻结概率 +10%",
+      "rarity": "rare",
+      "mods": {
+        "freezeChance": 0.1,
+        "freezeDur": 2
+      }
+    },
+    {
+      "id": "r5",
+      "name": "电枢",
+      "desc": "导电 +1，连锁 +1",
+      "rarity": "rare",
+      "mods": {
+        "charge": 1,
+        "chainCount": 1
+      }
+    },
+    {
+      "id": "r6",
+      "name": "双生球",
+      "desc": "每关额外 1 颗球",
+      "rarity": "epic",
+      "mods": {
+        "balls": 1
+      }
+    },
+    {
+      "id": "r7",
+      "name": "工程师手册",
+      "desc": "每 4 秒发射激光",
+      "rarity": "rare",
+      "mods": {
+        "laserCd": 4,
+        "laserDamage": 1
+      }
+    },
+    {
+      "id": "r8",
+      "name": "磁石",
+      "desc": "磁吸 +1",
+      "rarity": "common",
+      "mods": {
+        "magnet": 1
+      }
+    },
+    {
+      "id": "r9",
+      "name": "备用挡板",
+      "desc": "护盾 +1",
+      "rarity": "common",
+      "mods": {
+        "shieldCharges": 1
+      }
+    },
+    {
+      "id": "r10",
+      "name": "加速齿轮",
+      "desc": "初始球速 +40",
+      "rarity": "common",
+      "mods": {
+        "startSpeed": 40
+      }
+    },
+    {
+      "id": "r11",
+      "name": "宽幅挡板",
+      "desc": "挡板宽度 +20",
+      "rarity": "common",
+      "mods": {
+        "paddleW": 20
+      }
+    },
+    {
+      "id": "r12",
+      "name": "碎金者",
+      "desc": "金币获取 +30%",
+      "rarity": "common",
+      "mods": {
+        "goldBonus": 0.3
+      }
+    },
+    {
+      "id": "r13",
+      "name": "学者芯片",
+      "desc": "经验获取 +25%",
+      "rarity": "common",
+      "mods": {
+        "xpBonus": 0.25
+      }
+    },
+    {
+      "id": "r14",
+      "name": "连击稳定器",
+      "desc": "连锁加成 +15%",
+      "rarity": "rare",
+      "mods": {
+        "comboBonus": 0.15
+      }
+    },
+    {
+      "id": "r15",
+      "name": "余烬瓶",
+      "desc": "灼烧会扩散",
+      "rarity": "rare",
+      "mods": {
+        "burnSpread": 1
+      }
+    },
+    {
+      "id": "r16",
+      "name": "穿刺针",
+      "desc": "贯穿 +1",
+      "rarity": "epic",
+      "mods": {
+        "pierce": 1
+      }
+    },
+    {
+      "id": "r17",
+      "name": "暴击透镜",
+      "desc": "暴击倍率 +0.6",
+      "rarity": "rare",
+      "mods": {
+        "critMult": 0.6
+      }
+    },
+    {
+      "id": "r18",
+      "name": "逃生舱",
+      "desc": "生命归零时保留 1 点（每局一次）",
+      "rarity": "epic",
+      "mods": {
+        "lastStand": true
+      }
+    }
+  ],
+  "paddles": [
+    {
+      "id": "p1",
+      "name": "标准挡板",
+      "code": "STOCK",
+      "desc": "无加成，也无代价",
+      "mods": {},
+      "unlock": "初始可用"
+    },
+    {
+      "id": "p2",
+      "name": "宽幅挡板",
+      "code": "WIDE",
+      "desc": "宽 +30，横移速度 -8%",
+      "mods": {
+        "paddleW": 30,
+        "paddleSpeed": 0.92
+      },
+      "unlock": "通关第一章"
+    },
+    {
+      "id": "p3",
+      "name": "轻量挡板",
+      "code": "LIGHT",
+      "desc": "横移速度 +18%，宽 -16",
+      "mods": {
+        "paddleSpeed": 1.18,
+        "paddleW": -16
+      },
+      "unlock": "单局连锁 ≥10"
+    },
+    {
+      "id": "p4",
+      "name": "磁轨挡板",
+      "code": "MAGNET",
+      "desc": "接球后回正，宽 -8",
+      "mods": {
+        "magnet": 1,
+        "paddleW": -8
+      },
+      "unlock": "通关第三章"
+    },
+    {
+      "id": "p5",
+      "name": "工程台",
+      "code": "ENGINEER",
+      "desc": "每 4 秒激光，宽 -6",
+      "mods": {
+        "laserCd": 4,
+        "laserDamage": 1,
+        "paddleW": -6
+      },
+      "unlock": "累计击碎 800 块"
+    },
+    {
+      "id": "p6",
+      "name": "玻璃炮",
+      "code": "GLASS",
+      "desc": "伤害 +2，宽 -12，无护盾",
+      "mods": {
+        "damage": 2,
+        "paddleW": -12
+      },
+      "unlock": "无伤通关任意章节"
+    }
+  ],
+  "events": [
+    {
+      "id": "ev1",
+      "name": "废弃终端",
+      "text": "一台仍在闪烁的旧终端。屏幕上有半行没写完的代码。",
+      "options": [
+        {
+          "label": "读取残码（获得 1 次升级）",
+          "effect": "upgrade"
+        },
+        {
+          "label": "拆走零件（+45 碎片）",
+          "effect": "gold:45"
+        }
+      ]
+    },
+    {
+      "id": "ev2",
+      "name": "冷却池",
+      "text": "池水泛着冷光。碰一下，指尖会结霜。",
+      "options": [
+        {
+          "label": "浸泡（恢复 1 点生命）",
+          "effect": "heal:1"
+        },
+        {
+          "label": "取样（获得冻结类强化）",
+          "effect": "upgrade:frost"
+        }
+      ]
+    },
+    {
+      "id": "ev3",
+      "name": "熔渣裂缝",
+      "text": "裂缝里透出橙红的光，热浪让空气变形。",
+      "options": [
+        {
+          "label": "伸手（-1 生命，获得 2 次升级）",
+          "effect": "hurt:1,upgradex2"
+        },
+        {
+          "label": "绕开（+25 碎片）",
+          "effect": "gold:25"
+        }
+      ]
+    },
+    {
+      "id": "ev4",
+      "name": "信号塔",
+      "text": "塔顶在重复一段电码，像是在数砖块。",
+      "options": [
+        {
+          "label": "解析（+60 经验）",
+          "effect": "xp:60"
+        },
+        {
+          "label": "干扰（+35 碎片，-10 经验）",
+          "effect": "gold:35,xp:-10"
+        }
+      ]
+    },
+    {
+      "id": "ev5",
+      "name": "遗物商",
+      "text": "一个裹着斗篷的影子，摊位上只有三件东西。",
+      "options": [
+        {
+          "label": "用 70 碎片换 1 件遗物",
+          "effect": "buyrelic:70"
+        },
+        {
+          "label": "离开",
+          "effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "ev6",
+      "name": "破损的挡板",
+      "text": "上一任主人留下的挡板，边缘已经磨圆。",
+      "options": [
+        {
+          "label": "换上（挡板宽度 +18）",
+          "effect": "perm:paddleW:18"
+        },
+        {
+          "label": "熔掉（+40 碎片）",
+          "effect": "gold:40"
+        }
+      ]
+    },
+    {
+      "id": "ev7",
+      "name": "静电云",
+      "text": "细小的电弧在砖缝之间跳。",
+      "options": [
+        {
+          "label": "引雷（获得导电强化）",
+          "effect": "upgrade:thunder"
+        },
+        {
+          "label": "等它散去（+30 碎片）",
+          "effect": "gold:30"
+        }
+      ]
+    },
+    {
+      "id": "ev8",
+      "name": "维修站",
+      "text": "还能用的自动维修臂，只是校准很差。",
+      "options": [
+        {
+          "label": "修复（+1 生命，-30 碎片）",
+          "effect": "healpay:1:30"
+        },
+        {
+          "label": "拆解（+2 护盾）",
+          "effect": "shield:2"
+        }
+      ]
+    },
+    {
+      "id": "ev9",
+      "name": "记忆碎片",
+      "text": "一段不属于你的记忆：有人在屏幕前反复练习接球。",
+      "options": [
+        {
+          "label": "看完（+80 经验）",
+          "effect": "xp:80"
+        },
+        {
+          "label": "跳过（+20 碎片）",
+          "effect": "gold:20"
+        }
+      ]
+    },
+    {
+      "id": "ev10",
+      "name": "过载电容",
+      "text": "电容鼓包，但仍然可用。",
+      "options": [
+        {
+          "label": "接入（伤害 +1，下关球速 +60）",
+          "effect": "perm:damage:1,risk:speed"
+        },
+        {
+          "label": "丢弃",
+          "effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "ev11",
+      "name": "无名墓碑",
+      "text": "碑上刻着一串关卡编号，最后一位被磨掉了。",
+      "options": [
+        {
+          "label": "默哀（+1 生命上限）",
+          "effect": "maxlife:1"
+        },
+        {
+          "label": "拓印（+50 碎片）",
+          "effect": "gold:50"
+        }
+      ]
+    },
+    {
+      "id": "ev12",
+      "name": "主机后门",
+      "text": "一个没有权限校验的入口。",
+      "options": [
+        {
+          "label": "进入（直接跳到下一章，跳过 1 场战斗）",
+          "effect": "skip"
+        },
+        {
+          "label": "留作退路（+2 护盾）",
+          "effect": "shield:2"
+        }
+      ]
+    }
+  ],
+  "synergies": [
+    {
+      "id": "sy1",
+      "name": "热震",
+      "need": [
+        "f1",
+        "c1"
+      ],
+      "desc": "灼烧 + 冻结：冻结破碎时额外造成 2 点范围伤害",
+      "mods": {
+        "shatter": 0.4
+      }
+    },
+    {
+      "id": "sy2",
+      "name": "导电爆裂",
+      "need": [
+        "l1",
+        "f2"
+      ],
+      "desc": "导电 + 爆裂：爆炸会传导到带电砖块",
+      "mods": {
+        "chainCount": 1
+      }
+    },
+    {
+      "id": "sy3",
+      "name": "冰电共振",
+      "need": [
+        "c1",
+        "l1"
+      ],
+      "desc": "冻结目标的导电跳跃伤害翻倍",
+      "mods": {
+        "chainDamage": 1
+      }
+    },
+    {
+      "id": "sy4",
+      "name": "精准贯穿",
+      "need": [
+        "k1",
+        "k2"
+      ],
+      "desc": "精准接球后的贯穿必定暴击",
+      "mods": {
+        "critMult": 0.5
+      }
+    },
+    {
+      "id": "sy5",
+      "name": "球海激光",
+      "need": [
+        "m1",
+        "e1"
+      ],
+      "desc": "每多一颗球，激光冷却 -8%",
+      "mods": {
+        "laserCd": -0.8
+      }
+    },
+    {
+      "id": "sy6",
+      "name": "磁吸分裂",
+      "need": [
+        "e3",
+        "m1"
+      ],
+      "desc": "分裂出的球也会被磁吸回正",
+      "mods": {
+        "magnet": 1
+      }
+    },
+    {
+      "id": "sy7",
+      "name": "熔炉护盾",
+      "need": [
+        "f4",
+        "c4"
+      ],
+      "desc": "护盾破碎时对全场造成 3 点灼烧伤害",
+      "mods": {
+        "burn": 1
+      }
+    },
+    {
+      "id": "sy8",
+      "name": "无人机阵列",
+      "need": [
+        "e2",
+        "e6"
+      ],
+      "desc": "无人机数量 +1",
+      "mods": {
+        "drones": 1
+      }
+    },
+    {
+      "id": "sy9",
+      "name": "极限球速",
+      "need": [
+        "k6",
+        "m4"
+      ],
+      "desc": "球速上限再 +80",
+      "mods": {
+        "maxSpeed": 80
+      }
+    },
+    {
+      "id": "sy10",
+      "name": "暴击雷暴",
+      "need": [
+        "k4",
+        "l5"
+      ],
+      "desc": "暴击时额外触发一次导电",
+      "mods": {
+        "charge": 1
+      }
+    },
+    {
+      "id": "sy11",
+      "name": "多重余烬",
+      "need": [
+        "f3",
+        "f5"
+      ],
+      "desc": "灼烧扩散范围 +1 格",
+      "mods": {
+        "burnSpread": 1
+      }
+    },
+    {
+      "id": "sy12",
+      "name": "绝对贯穿",
+      "need": [
+        "k2",
+        "r16"
+      ],
+      "desc": "贯穿次数 +1",
+      "mods": {
+        "pierce": 1
+      }
+    }
+  ],
+  "shop": [
+    {
+      "kind": "upgrade",
+      "price": 70,
+      "label": "随机升级"
+    },
+    {
+      "kind": "relic",
+      "price": 95,
+      "label": "随机遗物"
+    },
+    {
+      "kind": "heal",
+      "price": 55,
+      "label": "恢复 1 点生命"
+    },
+    {
+      "kind": "shield",
+      "price": 40,
+      "label": "获得 2 层护盾"
+    },
+    {
+      "kind": "reroll",
+      "price": 25,
+      "label": "刷新本店"
+    }
+  ],
+  "nodes": {
+    "battle": {
+      "name": "战斗",
+      "code": "BATTLE",
+      "color": "#7cffb2"
+    },
+    "elite": {
+      "name": "精英",
+      "code": "ELITE",
+      "color": "#ffc46b"
+    },
+    "shop": {
+      "name": "商店",
+      "code": "SHOP",
+      "color": "#7fd8ff"
+    },
+    "event": {
+      "name": "事件",
+      "code": "EVENT",
+      "color": "#b39cff"
+    },
+    "supply": {
+      "name": "补给",
+      "code": "SUPPLY",
+      "color": "#9fd3a8"
+    },
+    "boss": {
+      "name": "Boss",
+      "code": "BOSS",
+      "color": "#ff6b7e"
+    }
+  },
+  "arch": {
+    "kinetic": {
+      "name": "动能暴击",
+      "color": "#ffd479",
+      "brief": "速度、精准与贯穿"
+    },
+    "flame": {
+      "name": "烈焰爆破",
+      "color": "#ff7a5c",
+      "brief": "灼烧、爆炸与扩散"
+    },
+    "frost": {
+      "name": "冰霜控制",
+      "color": "#7fd8ff",
+      "brief": "冻结、碎裂与护盾"
+    },
+    "thunder": {
+      "name": "雷电传导",
+      "color": "#b39cff",
+      "brief": "导电、跳跃与连锁"
+    },
+    "split": {
+      "name": "分裂多球",
+      "color": "#6be39a",
+      "brief": "分裂、复制与球数"
+    },
+    "engineer": {
+      "name": "工程辅助",
+      "color": "#c9b28a",
+      "brief": "激光、无人机与磁吸"
+    }
+  }
+}

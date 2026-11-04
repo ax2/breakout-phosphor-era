@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>BREAKOUT：磷光纪元</title>
+<meta name="description" content="BREAKOUT: Phosphor Era — 手工关卡打砖块，远征构筑，磷光终端美学。">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="fit">
+  <div id="stage">
+    <canvas id="game" width="1280" height="720"></canvas>
+
+    <div id="hud" class="hidden">
+      <div class="hud-left">
+        <span class="hud-label">生命</span>
+        <span id="lives" class="pips"></span>
+        <span class="hud-label" style="margin-left:16px">SCORE</span>
+        <span id="score" class="hud-score">000000</span>
+      </div>
+      <div class="hud-center">
+        <div id="levelname" class="hud-title">旧式终端 · 冷启动</div>
+        <div id="levelcode" class="hud-code">LEGACY TERMINAL</div>
+      </div>
+      <div class="hud-right">
+        <div id="speed" class="hud-meta">球速 520 · 剩余 0</div>
+        <div id="inputmode" class="hud-code">INPUT MOUSE</div>
+      </div>
+      <div id="progress" class="hud-progress"><i></i></div>
+      <div id="runbar" class="runbar hidden">
+        <span id="run-chapter">第一章</span>
+        <span id="run-gold">碎片 0</span>
+        <span id="run-level">等级 1</span>
+        <span id="run-build" class="run-build">构筑 0</span>
+      </div>
+      <div id="bossbar" class="bossbar hidden">
+        <div class="boss-head"><span id="boss-name">终端守卫</span><span id="boss-phase">阶段 1</span></div>
+        <div class="boss-track"><i id="boss-fill"></i></div>
+        <div id="boss-note" class="boss-note"></div>
+      </div>
+    </div>
+
+    <div id="screen"></div>
+    <div id="toast"></div>
+    <div id="crt"></div>
+    <div id="rotate"><div class="rot-icon">⟳</div><div>请横屏游玩</div><div class="rot-sub">ROTATE YOUR DEVICE</div></div>
+  </div>
+</div>
+<script>
+window.__errs = [];
+window.addEventListener("error", function (e) {
+  var t = (e.message || "?") + " @ " + (e.filename || "").split("/").pop() + ":" + (e.lineno || 0) + ":" + (e.colno || 0);
+  window.__errs.push(t);
+  var d = document.getElementById("err") || document.createElement("pre");
+  d.id = "err";
+  d.style.cssText = "position:fixed;left:0;top:0;z-index:99999;color:#ff8080;background:#000;font:11px monospace;padding:6px;white-space:pre-wrap;margin:0;max-width:100%";
+  d.textContent = window.__errs.join("\n");
+  document.body.appendChild(d);
+});
+</script>
+<script src="data/levels.js"></script>
+<script src="js/core.js"></script>
+<script src="js/content.js"></script>
+<script src="js/run.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

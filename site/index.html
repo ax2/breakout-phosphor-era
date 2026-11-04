@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#05070f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305070f'/%3E%3Cpath d='M16 3l9 24-9-7-9 7z' fill='%236ff4ff'/%3E%3C/svg%3E"
+    />
+    <title>雷霆矢量 THUNDER VECTOR</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --cyan: #6ff4ff;
+        --ink: #05070f;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: radial-gradient(120% 80% at 50% 0%, #0d1830 0%, #05070f 60%, #010205 100%);
+        font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+        color: #dff6ff;
+        overscroll-behavior: none;
+        touch-action: none;
+      }
+      #game {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #game canvas {
+        display: block;
+        touch-action: none;
+      }
+      #boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        z-index: 5;
+        transition: opacity 0.45s ease;
+        background: #05070f;
+      }
+      #boot.done {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .boot-mark {
+        font-size: 13px;
+        letter-spacing: 0.55em;
+        color: #4a7f92;
+        text-transform: uppercase;
+      }
+      .boot-title {
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        color: #9ff8ff;
+        text-shadow: 0 0 22px rgba(80, 230, 255, 0.5);
+      }
+      .boot-bar {
+        width: 168px;
+        height: 2px;
+        background: #11283a;
+        overflow: hidden;
+      }
+      .boot-bar i {
+        display: block;
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+        animation: sweep 1.1s ease-in-out infinite;
+      }
+      @keyframes sweep {
+        from {
+          transform: translateX(-110%);
+        }
+        to {
+          transform: translateX(310%);
+        }
+      }
+      #rotate {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background: #04060d;
+        font-size: 15px;
+        letter-spacing: 0.16em;
+      }
+      #rotate b {
+        color: var(--cyan);
+        font-size: 18px;
+        letter-spacing: 0.28em;
+      }
+      @media (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+        #rotate {
+          display: flex;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-bar i {
+          animation: none;
+          width: 100%;
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="./assets/index-C_Iy2Kop.js"></script>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="boot">
+      <div class="boot-mark">Orbital Command</div>
+      <div class="boot-title">雷霆矢量</div>
+      <div class="boot-bar"><i></i></div>
+    </div>
+    <div id="rotate">
+      <b>请横竖屏切换</b>
+      <span>本作以竖屏设计，旋转设备以获得完整视野</span>
+    </div>
+  </body>
+</html>

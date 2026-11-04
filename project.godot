@@ -1,0 +1,42 @@
+; BREAKOUT: 磷光纪元 (Breakout: Phosphor Era)
+; Godot 4.7.1 stable / GDScript / GL Compatibility
+
+config_version=5
+
+[application]
+
+config/name="BREAKOUT 磷光纪元"
+config/description="A handcrafted brick-breaking game with deterministic swept collision."
+config/version="0.3.0-stage03"
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+boot_splash/bg_color=Color(0.0196078, 0.0313726, 0.0392157, 1)
+boot_splash/show_image=false
+
+[autoload]
+
+Game="*res://src/game/game_state.gd"
+Audio="*res://src/audio/audio_director.gd"
+Run="*res://src/game/run_state.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+window/vsync/vsync_mode=1
+
+[physics]
+
+common/physics_ticks_per_second=120
+common/max_fps=0
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+environment/defaults/default_clear_color=Color(0.0196078, 0.0313726, 0.0392157, 1)
