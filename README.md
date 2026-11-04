@@ -29,15 +29,25 @@
 
 ### 方式二：Windows 桌面端
 
+直接从 [Releases](https://github.com/ax2/breakout-phosphor-era/releases) 下载
+`BREAKOUT-PhosphorEra-win64-v0.5.0.zip`，解压后双击 `BREAKOUT Phosphor Era.exe`。
+未签名，首次运行可能弹 SmartScreen，选「更多信息 → 仍要运行」。
+
+自己构建：
+
 ```bash
 cd shells/desktop
-npm install
+npm install        # 装 Electron 运行时
 npm start          # 开发运行
 npm run pack       # 打 NSIS 安装包 / 免安装 exe 到 shells/desktop/dist
 ```
 
 存档在 `%APPDATA%/breakout-phosphor-era/save.json`，与浏览器存档互不影响。
 
+> 打包时 `electron-builder` 默认会联网拉对应版本的 Electron。
+> 离线环境可在 `package.json` 的 `build` 里加 `"electronDist": "node_modules/electron/dist"`，
+> 直接复用已安装的运行时（本仓库当前就是这么配置的）。
+>
 > 也保留了早期 Godot 导出包：`dist/BREAKOUT-PhosphorEra-win64-v0.4.0.zip`，
 > 解压后 `BreakoutPhosphorEra.pck` 必须与 exe 同目录。
 

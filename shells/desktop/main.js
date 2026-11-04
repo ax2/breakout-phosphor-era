@@ -84,6 +84,36 @@ function createWindow() {
   if (process.env.BP_DEBUG_PORT) {
     win.webContents.debugger.attach("1.3");
   }
+
+  // 冒烟自检：BP_SMOKE=1 时加载完就验一遍「内容装进来了 / 原生存储通了」然后退出
+  if (process.env.BP_SMOKE) {
+    win.webContents.once("did-finish-load", async () => {
+      try {
+        const raw = await win.webContents.executeJavaScript(`(() => {
+          const P = window.BP_PLATFORM || {};
+          const G = window.BPGame || {};
+          const probe = "bp-smoke-" + Date.now();
+          P.store.set(probe, { ok: true, n: 42 });
+          const back = P.store.get(probe);
+          P.store.remove(probe);
+          return JSON.stringify({
+            hasGame: !!G.CT,
+            levels: G.CT ? G.CT.LEVELS.length : 0,
+            bosses: G.CT ? G.CT.BOSSES.length : 0,
+            platform: P.kind,
+            backend: P.store && P.store.backend,
+            roundTrip: back && back.n === 42,
+            nativeBridge: !!window.__BP_NATIVE__,
+          });
+        })()`);
+        console.log("BP_SMOKE " + raw);
+        app.exit(0);
+      } catch (e) {
+        console.error("BP_SMOKE FAIL " + (e && e.message));
+        app.exit(1);
+      }
+    });
+  }
 }
 
 ipcMain.on("bp-window", (e, op, arg) => {

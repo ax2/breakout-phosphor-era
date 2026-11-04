@@ -11,12 +11,13 @@
     "pack": "electron-builder --win --x64"
   },
   "devDependencies": {
-    "electron": "^45.2.2",
+    "electron": "^42.5.1",
     "electron-builder": "^26.0.12"
   },
   "build": {
     "appId": "com.zicode.breakout.phosphor",
     "productName": "BREAKOUT Phosphor Era",
+    "electronDist": "node_modules/electron/dist",
     "directories": { "output": "dist" },
     "files": ["main.js", "preload.js", "package.json"],
     "extraResources": [
