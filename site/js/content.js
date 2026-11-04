@@ -52,7 +52,7 @@
   L(2, 3, "烟道", "FLUES", "三条竖井，落点受限", [
     "##..##..##..", "##..##..##..", "##..##..##..", "....##..##..", "....##..##.."]);
   L(2, 4, "坩埚", "CRUCIBLE", "中心高耐久，四周易爆", [
-    ".BB......BB.", ".B.AAAAAA.B.", "...AXXXXA...", ".B.AAAAAA.B.", ".BB......BB."]);
+    ".BB......BB.", ".B.TTTTTT.B.", "...TXXXXT...", ".B.TTTTTT.B.", ".BB......BB."]);
   L(2, 5, "传送带", "CONVEYOR", "斜向排列的装甲带", [
     "AAA.........", ".AAA........", "..AAA.......", "...AAA......", "....AAA....."]);
   L(2, 6, "过热", "OVERHEAT", "密集爆裂，注意连锁顺序", [
@@ -102,17 +102,17 @@
   L(5, 1, "错位", "DISPLACED", "缺口迫使改变反弹角度", [
     "###..###..##", "###..###..##", "..##..###..#", "..##..###..#"]);
   L(5, 2, "门框", "DOORFRAME", "穿越中央窗口", [
-    "XXXX....XXXX", "..##....##..", "..##....##..", "XXXX....XXXX", "..##....##.."]);
+    "XXXX....XXXX", "..##....##..", "..##....##..", "XX.X....X.XX", "..##....##.."]);
   L(5, 3, "折跃点", "WARP POINT", "密集小方块", [
     ".#.#.#.#.#.#", "#.#.#.#.#.#.", ".#.#.#.#.#.#", "#.#.#.#.#.#."]);
   L(5, 4, "断层", "FAULT LINE", "斜向断层", [
     "A...........", "AA..........", ".AA.........", "..AA........", "...AA.......", "....AA......"]);
   L(5, 5, "回环", "LOOP", "环形结构", [
-    "..########..", ".#........#.", ".#.XXXXXX.#.", ".#........#.", "..########.."]);
+    "..###..###..", ".#........#.", ".#..XXXX..#.", ".#........#.", "..###..###.."]);
   L(5, 6, "相位", "PHASE SHIFT", "交错双层", [
     "##..##..##..", "..##..##..##", "##..##..##..", "..##..##..##", "##..##..##.."]);
   L(5, 7, "迷宫", "MAZE", "通道考验控球", [
-    "X.XXX.XXX.XX", "X.T.X.T.X..X", "XXX.X.XXX.XX", "X.T.X.T.X..X", "X.XXX.XXX.XX"]);
+    "X..XX..XX..X", "X.T....T...X", "XX.XX.XX.X.X", "X.T....T...X", "X..XX..XX..X"]);
   L(5, 8, "跃迁", "JUMP", "综合", [
     "....AAAA....", "..XX....XX..", "..BB.AA.BB..", "..XX....XX..", "....AAAA...."]);
 
@@ -122,7 +122,7 @@
   L(6, 2, "内核", "KERNEL", "保护核心", [
     "..TTTTTTTT..", "..TSSSSSST..", "..TSAAAAST..", "..TSSSSSST..", "..TTTTTTTT.."]);
   L(6, 3, "缓存", "CACHE", "再生 + 装甲", [
-    "RRRRRRRRRRRR", "RAAAAAAAAAAR", "RARRRRRRRRAR", "RAAAAAAAAAAR", "RRRRRRRRRRRR"]);
+    "############", "#TTTTTTTTTT#", "#T#RRRRRR#T#", "#TTTTTTTTTT#", "############"]);
   L(6, 4, "中断", "INTERRUPT", "缝隙中的目标", [
     "XX.XX.XX.XX.", "..BB....BB..", "XX.XX.XX.XX.", "..AA....AA..", "XX.XX.XX.XX."]);
   L(6, 5, "守护进程", "DAEMON", "节点网络", [
@@ -130,7 +130,7 @@
   L(6, 6, "堆栈", "STACK", "层层堆叠", [
     "############", "TTTTTTTTTTTT", "BBBBBBBBBBBB", "AAAAAAAAAAAA", "RRRRRRRRRRRR"]);
   L(6, 7, "死锁", "DEADLOCK", "不可破坏结构", [
-    "X.XXXXXXXX.X", "X..........X", "X.AAAAAAAA.X", "X..........X", "X.XXXXXXXX.X"]);
+    "XX.XXXXXX.XX", "X.AAAAAAAA.X", "X.AAAAAAAA.X", "............", "............"]);
   L(6, 8, "主机", "THE HOST", "最终考验", [
     "AAAA....AAAA", "A.SS....SS.A", "..BB.AA.BB..", "A.SS....SS.A", "AAAA....AAAA"]);
 
@@ -141,14 +141,14 @@
 
   const BOSSES = [
     {
-      id: "b1", chapter: "ch1", name: "终端守卫", code: "TERMINAL WARDEN", hp: 44,
+      id: "b1", chapter: "ch1", name: "终端守卫", code: "TERMINAL WARDEN", hp: 14,
       brief: "旋转护甲把核心围住。打掉任意两块护甲，核心才会暴露。",
       parts: [
-        part("core", "core", "core", -60, -30, 120, 60, 44, { invuln: true }),
-        part("a1", "armor", "armorPlate", -150, -80, 70, 24, 8),
-        part("a2", "armor", "armorPlate", 80, -80, 70, 24, 8),
-        part("a3", "armor", "armorPlate", -150, 56, 70, 24, 8),
-        part("a4", "armor", "armorPlate", 80, 56, 70, 24, 8),
+        part("core", "core", "core", -60, -30, 120, 60, 14, { invuln: true }),
+        part("a1", "armor", "armorPlate", -150, -80, 70, 24, 3),
+        part("a2", "armor", "armorPlate", 80, -80, 70, 24, 3),
+        part("a3", "armor", "armorPlate", -150, 56, 70, 24, 3),
+        part("a4", "armor", "armorPlate", 80, 56, 70, 24, 3),
       ],
       phases: [
         { at: 1.0, name: "护甲展开", coreInvuln: true },
@@ -177,13 +177,13 @@
       },
     },
     {
-      id: "b2", chapter: "ch2", name: "熔炉巨像", code: "FORGE COLOSSUS", hp: 62,
+      id: "b2", chapter: "ch2", name: "熔炉巨像", code: "FORGE COLOSSUS", hp: 18,
       brief: "每次命中共振都会升温。热量满时进入过载，受到的伤害翻倍。",
       parts: [
-        part("core", "core", "core", -70, -40, 140, 80, 62),
-        part("h1", "armor", "armorPlate", -190, -20, 60, 60, 12),
-        part("h2", "armor", "armorPlate", 130, -20, 60, 60, 12),
-        part("h3", "armor", "armorPlate", -40, 70, 80, 22, 10),
+        part("core", "core", "core", -70, -40, 140, 80, 18),
+        part("h1", "armor", "armorPlate", -190, -20, 60, 60, 5),
+        part("h2", "armor", "armorPlate", 130, -20, 60, 60, 5),
+        part("h3", "armor", "armorPlate", -40, 70, 80, 22, 4),
       ],
       phases: [
         { at: 1.0, name: "点火", coreInvuln: false },
@@ -212,13 +212,13 @@
       },
     },
     {
-      id: "b3", chapter: "ch3", name: "冰镜双核", code: "MIRROR TWINS", hp: 56,
+      id: "b3", chapter: "ch3", name: "冰镜双核", code: "MIRROR TWINS", hp: 16,
       brief: "两个核心轮流被冰镜保护。打碎当前镜子，窗口只开 6 秒。",
       parts: [
-        part("c1", "core", "core", -150, -30, 110, 60, 28),
-        part("c2", "core", "core", 40, -30, 110, 60, 28),
-        part("m1", "armor", "armorPlate", -160, -34, 130, 68, 10, { invuln: true }),
-        part("m2", "armor", "armorPlate", 30, -34, 130, 68, 10, { invuln: true }),
+        part("c1", "core", "core", -150, -30, 110, 60, 8),
+        part("c2", "core", "core", 40, -30, 110, 60, 8),
+        part("m1", "armor", "armorPlate", -160, -34, 130, 68, 4, { invuln: true }),
+        part("m2", "armor", "armorPlate", 30, -34, 130, 68, 4, { invuln: true }),
       ],
       phases: [
         { at: 1.0, name: "双镜闭合", coreInvuln: true },
@@ -227,8 +227,8 @@
       tick(b, sim, dt) {
         b.state.side = b.state.side || 0;
         b.state.swap = (b.state.swap || 0) - dt;
-        const m1 = b.parts.find((p) => p.id === "m1");
-        const m2 = b.parts.find((p) => p.id === "m2");
+        const m1 = b.parts.find((p) => p.partId === "m1");
+        const m2 = b.parts.find((p) => p.partId === "m2");
         if (b.state.swap <= 0) {
           b.state.swap = 9;
           b.state.side = 1 - b.state.side;
@@ -244,14 +244,14 @@
       },
     },
     {
-      id: "b4", chapter: "ch4", name: "电网织者", code: "GRID WEAVER", hp: 58,
+      id: "b4", chapter: "ch4", name: "电网织者", code: "GRID WEAVER", hp: 24,
       brief: "四个供能节点维持护盾。每切断一个节点，核心暴露 4 秒。",
       parts: [
-        part("core", "core", "core", -60, -30, 120, 60, 58, { invuln: true }),
-        part("n1", "armor", "shieldNode", -220, -70, 56, 44, 6),
-        part("n2", "armor", "shieldNode", 164, -70, 56, 44, 6),
-        part("n3", "armor", "shieldNode", -220, 30, 56, 44, 6),
-        part("n4", "armor", "shieldNode", 164, 30, 56, 44, 6),
+        part("core", "core", "core", -60, -30, 120, 60, 24, { invuln: true }),
+        part("n1", "armor", "shieldNode", -220, -76, 70, 52, 3),
+        part("n2", "armor", "shieldNode", 150, -76, 70, 52, 3),
+        part("n3", "armor", "shieldNode", -220, 24, 70, 52, 3),
+        part("n4", "armor", "shieldNode", 150, 24, 70, 52, 3),
       ],
       phases: [
         { at: 1.0, name: "电网闭合", coreInvuln: true },
@@ -274,11 +274,11 @@
       },
     },
     {
-      id: "b5", chapter: "ch5", name: "折跃巨蛇", code: "WARP SERPENT", hp: 70,
+      id: "b5", chapter: "ch5", name: "折跃巨蛇", code: "WARP SERPENT", hp: 10,
       brief: "由九节组成的蛇身沿正弦路径游动。只有头部是弱点，身体会缓慢再生。",
       parts: [
-        part("head", "core", "weakPoint", 0, -110, 74, 54, 32),
-        ...Array.from({ length: 8 }, (_, i) => part("s" + i, "armor", "armorPlate", 0, 0, 52, 26, 5, { regen: 1 })),
+        part("head", "core", "weakPoint", 0, -110, 92, 64, 10),
+        ...Array.from({ length: 8 }, (_, i) => part("s" + i, "armor", "armorPlate", 0, 0, 56, 28, 3, { regen: 1 })),
       ],
       phases: [
         { at: 1.0, name: "苏醒", coreInvuln: false },
@@ -286,45 +286,50 @@
         { at: 0.22, name: "折跃：路径紊乱", coreInvuln: false },
       ],
       tick(b, sim, dt) {
-        const head = b.parts.find((p) => p.id === "head");
+        const head = b.parts.find((p) => p.partId === "head");
         if (!head || !head.alive) return;
-        b.state.p = (b.state.p || 0) + dt * (b.phase >= 2 ? 1.5 : b.phase >= 1 ? 1.05 : 0.75);
+        // 速度压低：头部是唯一弱点，轨迹必须跟得上，否则玩家只能靠运气命中
+        b.state.p = (b.state.p || 0) + dt * (b.phase >= 2 ? 1.12 : b.phase >= 1 ? 0.84 : 0.64);
         const cx = 640 + Math.sin(b.state.p * 0.9) * 300;
         const cy = 210 + Math.sin(b.state.p * 1.7) * 70;
         head.rect.x = cx - head.rect.w / 2;
         head.rect.y = cy - head.rect.h / 2;
-        let px = cx, py = cy;
         for (let i = 0; i < 8; i++) {
-          const s = b.parts.find((p) => p.id === "s" + i);
+          const s = b.parts.find((p) => p.partId === "s" + i);
           if (!s || !s.alive) continue;
-          const t = b.state.p - (i + 1) * 0.42;
+          // 相位步长要和身宽匹配：按路径最大速度 ~296px/p 计算，0.19 大约 56px 一节
+          const t = b.state.p - (i + 1) * 0.19;
           const sx = 640 + Math.sin(t * 0.9) * 300;
           const sy = 210 + Math.sin(t * 1.7) * 70;
           s.rect.x = sx - s.rect.w / 2;
           s.rect.y = sy - s.rect.h / 2;
-          px = sx; py = sy;
         }
+        // 躯干缓慢再生（此前只递减计时器、从未真正回血）
         for (const p of b.parts) {
-          if (p.role === "armor" && p.alive && p.hp < p.maxHp) p.regenTimer -= dt;
+          if (p.role !== "armor" || !p.alive || p.hp >= p.maxHp) continue;
+          p.regenTimer -= dt;
+          if (p.regenTimer <= 0) {
+            p.hp = Math.min(p.maxHp, p.hp + 1);
+            p.regenTimer = 9;
+          }
         }
       },
+      // 打躯干不再给头部回血：旧逻辑等于"打偏反而帮 Boss 加血"，是反玩家设计
       onPart(b, p, sim) {
         if (p.role === "core") return;
-        const head = b.parts.find((h) => h.id === "head");
-        if (head) head.hp = Math.min(head.maxHp, head.hp + 1);
       },
     },
     {
-      id: "b6", chapter: "ch6", name: "主机之心", code: "HEART OF THE HOST", hp: 80,
+      id: "b6", chapter: "ch6", name: "主机之心", code: "HEART OF THE HOST", hp: 30,
       brief: "组合所有机制：旋转护甲、节点窗口、阶段转换。它会针对你的构筑改变护甲类型，但总有预告。",
       parts: [
-        part("core", "core", "core", -70, -35, 140, 70, 80, { invuln: true }),
-        part("a1", "armor", "armorPlate", -170, -100, 90, 26, 9),
-        part("a2", "armor", "armorPlate", 80, -100, 90, 26, 9),
-        part("a3", "armor", "armorPlate", -170, 74, 90, 26, 9),
-        part("a4", "armor", "armorPlate", 80, 74, 90, 26, 9),
-        part("n1", "armor", "shieldNode", -40, -110, 50, 40, 7),
-        part("n2", "armor", "shieldNode", -10, 80, 50, 40, 7),
+        part("core", "core", "core", -70, -35, 140, 70, 30, { invuln: true }),
+        part("a1", "armor", "armorPlate", -170, -100, 90, 26, 3),
+        part("a2", "armor", "armorPlate", 80, -100, 90, 26, 3),
+        part("a3", "armor", "armorPlate", -170, 74, 90, 26, 3),
+        part("a4", "armor", "armorPlate", 80, 74, 90, 26, 3),
+        part("n1", "armor", "shieldNode", -40, -110, 58, 44, 2),
+        part("n2", "armor", "shieldNode", -10, 80, 58, 44, 2),
       ],
       phases: [
         { at: 1.0, name: "主机启动", coreInvuln: true },
@@ -436,6 +441,45 @@
     { id: "r17", name: "暴击透镜", desc: "暴击倍率 +0.6", rarity: "rare", mods: { critMult: 0.6 } },
     { id: "r18", name: "逃生舱", desc: "生命归零时保留 1 点（每局一次）", rarity: "epic", mods: { lastStand: true } },
   ];
+
+  // ---------------------------------------------------------------- 特殊砖布置
+  // 金砖（G，必掉碎片）与游走砖（M，横向往复）不是全关铺开，
+  // 只挑部分关卡布点，保证它们是"值得绕路去打"的目标而不是背景噪声。
+  const SPECIAL_PLAN = {
+    c1_03: { gold: 1, moving: 3 }, c1_06: { gold: 1, moving: 3 }, c1_08: { gold: 1, moving: 2 },
+    c2_03: { gold: 1, moving: 3 },
+    c3_01: { gold: 1, moving: 1 }, c3_04: { gold: 1, moving: 0 },
+    c4_01: { gold: 1, moving: 3 }, c4_02: { gold: 1, moving: 3 },
+    c4_05: { gold: 2, moving: 3 }, c4_07: { gold: 2, moving: 4 },
+    c5_03: { gold: 2, moving: 3 }, c5_05: { gold: 2, moving: 4 }, c5_06: { gold: 2, moving: 4 },
+    c6_06: { gold: 2, moving: 4 },
+  };
+
+  (function placeSpecials() {
+    for (const lv of LEVELS) {
+      const plan = SPECIAL_PLAN[lv.id];
+      if (!plan) continue;
+      const rows = lv.rows.map((r) => r.split(""));
+      const pickable = [];
+      for (let r = 0; r < rows.length; r++) {
+        for (let c = 0; c < rows[r].length; c++) if (rows[r][c] === "#") pickable.push([r, c]);
+      }
+      // 金砖优先放在最下排：诱惑最大，风险也最大
+      const sorted = pickable.slice().sort((a, b) => b[0] - a[0]);
+      let placed = 0;
+      for (const [r, c] of sorted) {
+        if (placed >= (plan.gold || 0)) break;
+        rows[r][c] = "G"; placed++;
+      }
+      const rest = pickable.filter(([r, c]) => rows[r][c] === "#").sort((a, b) => a[0] - b[0]);
+      placed = 0;
+      for (const [r, c] of rest) {
+        if (placed >= (plan.moving || 0)) break;
+        rows[r][c] = "M"; placed++;
+      }
+      lv.rows = rows.map((r) => r.join(""));
+    }
+  })();
 
   // ---------------------------------------------------------------- 挡板
   const PADDLES = [

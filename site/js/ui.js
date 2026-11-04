@@ -5,6 +5,7 @@
   const CT = window.CONTENT;
   const ST = window.STATE;
   const State = ST.State, Meta = ST.Meta, Run = ST.Run, Classic = ST.Classic;
+  const BP_PLATFORM = window.BP_PLATFORM || { kind: "web", isTouch: false, isMobile: false, vibrate() {}, toggleFullscreen() { return false; } };
 
   // ================================================================ 音频
   const Sfx = {
@@ -124,10 +125,19 @@
   let demoMode = false;
 
   function resize() {
-    scale = Math.min(window.innerWidth / C.W, window.innerHeight / C.H);
+    // 移动端用 visualViewport：地址栏收起/展开时不会把舞台顶出屏幕
+    const vv = window.visualViewport;
+    const vw = vv ? vv.width : window.innerWidth;
+    const vh = vv ? vv.height : window.innerHeight;
+    const pad = BP_PLATFORM.isTouch ? 0.985 : 1;
+    scale = Math.min(vw / C.W, vh / C.H) * pad;
     stage.style.transform = `scale(${scale})`;
+    // 移动端画布按实际像素渲染，避免 1280 宽被缩小后发虚
+    if (BP_PLATFORM.isTouch) view.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2) * Math.min(1.6, 1 / Math.max(0.35, scale)));
   }
   window.addEventListener("resize", resize);
+  window.addEventListener("orientationchange", () => setTimeout(resize, 120));
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", resize);
   resize();
 
   function applySettings() {
@@ -199,7 +209,9 @@
         <button class="btn" id="b-codex">图鉴 / 成就</button>
         <button class="btn" id="b-set">设置</button>
       </div>
-      <div class="footer-note">鼠标 / A D / ← → 　·　空格或左键发球　·　ESC 暂停</div>
+      <div class="footer-note">${BP_PLATFORM.isTouch
+        ? "拖动挡板　·　点击发球　·　横屏体验更佳"
+        : "鼠标 / A D / ← → 　·　空格或左键发球　·　ESC 暂停"}</div>
       ${followCardHTML()}
       <div class="corner-note l">BUILD 0.4.0 · FULL · WEB</div>
       <div class="corner-note r">最高分 ${pad(m.bestScore || 0, 6)} · 击碎 ${m.totalBricks || 0} · 存档 ${State.status}</div>
@@ -239,6 +251,12 @@
           <div class="ndesc">每层强化同一章，层数递增、规则收紧。<br>记录最高层数，固定种子可复现。</div>
           <div class="nfoot">最高 ${m.endlessBest || 0} 层</div>
         </div>
+        <div class="node-card" data-mode="daily" style="border-color:rgba(255,196,107,0.45)">
+          <div class="ntype" style="color:#ffc46b">DAILY · ${Run.dailyInfo().key}</div>
+          <div class="nname">每日挑战</div>
+          <div class="ndesc">${Run.dailyInfo().rule.name}：${Run.dailyInfo().rule.desc}<br>当天固定种子，所有人的牌一样。</div>
+          <div class="nfoot">今日最佳 ${(m.daily && m.daily.key === Run.dailyInfo().key && m.daily.best) || 0}</div>
+        </div>
       </div>
       <button class="btn ghost" id="b-back" style="position:absolute;left:72px;top:520px;width:140px">返回</button>
     `);
@@ -246,6 +264,7 @@
       el.onclick = () => {
         Sfx.play("uiConfirm", -8);
         if (el.dataset.mode === "classic") showClassicSelect(0);
+        else if (el.dataset.mode === "daily") { Run.startDaily(); showRoute(); }
         else showPaddleSelect(el.dataset.mode);
       };
     });
@@ -366,9 +385,12 @@
       <div class="route-wrap">
         <div class="route-head">
           <div>
-            <div class="page-kicker">${r.mode === "endless" ? "ENDLESS · FLOOR " + (r.endlessFloor + 1) : "EXPEDITION"}</div>
+            <div class="page-kicker">${r.mode === "endless"
+              ? "ENDLESS · FLOOR " + (r.endlessFloor + 1)
+              : r.mode === "daily" ? "DAILY · " + Run.dailyInfo().key : "EXPEDITION"}</div>
             <h2 class="route-title">第${["一", "二", "三", "四", "五", "六"][Run.chapterIdx()]}章 · ${ch.name}</h2>
             <div class="page-sub">${ch.brief}</div>
+            ${r.mode === "daily" ? `<div class="page-sub" style="color:#ffc46b;margin-top:4px">今日规则 · ${Run.dailyInfo().rule.name}：${Run.dailyInfo().rule.desc}</div>` : ""}
           </div>
           <div class="route-meta">
             生命 ${r.hp} / ${r.maxHp}　碎片 ${r.gold}<br>
@@ -410,6 +432,7 @@
     const r = Run.current;
     sim = new BP.Sim();
     sim.setMods(r ? Run.mods() : BP.defaultStats());
+    sim.dropsEnabled = State.settings.drops !== false;
     const d = Object.assign({ legend: BP.LEGEND }, def);
     if (battleCtx.mode !== "classic") d.lives = 99;
     sim.setup(d, r ? (r.seed + r.row * 131 + r.chapterPos * 977) : (Date.now() & 0xffff));
@@ -429,6 +452,8 @@
     document.getElementById("bossbar").classList.toggle("hidden", !def.boss);
     if (def.boss) document.getElementById("boss-name").textContent = def.boss.name;
     state = "play"; acc = 0;
+    autoPausedBy = null;
+    resetMouseAnchor();
     updateHudStatic(def);
     updateHud();
     Sfx.resume(); Music.start();
@@ -451,10 +476,15 @@
     const r = Run.current;
     if (!r) { showMenu(); return; }
     r.hp = Math.max(1, sim.lives);
+    if (r.mode === "daily") {
+      const key = Run.dailyInfo().key;
+      if (!State.meta.daily || State.meta.daily.key !== key) State.meta.daily = { key: key, best: 0 };
+      State.meta.daily.best = Math.max(State.meta.daily.best || 0, summary.score);
+    }
     pendingPicks = [];
     let res;
     if (battleCtx.nodeType === "boss") {
-      res = Run.finishBoss(true);
+      res = Run.finishBoss(true, summary);
       pendingPicks.push({ kind: "relic" });
     } else {
       res = Run.finishNode(true, summary);
@@ -785,6 +815,10 @@
       ["粒子密度", ["关", "50%", "100%"], () => [0, 0.5, 1].indexOf(nearest([0, 0.5, 1], st.particles)), (i) => (st.particles = [0, 0.5, 1][i])],
       ["伤害数字", ["关", "开"], () => (st.damage_numbers ? 1 : 0), (i) => (st.damage_numbers = i === 1)],
       ["残响引导", ["关", "开"], () => (st.echo_assist ? 1 : 0), (i) => (st.echo_assist = i === 1)],
+      ["鼠标移出暂停", ["关", "开"], () => (st.pause_on_leave ? 1 : 0), (i) => (st.pause_on_leave = i === 1)],
+      ["回来自动继续", ["关", "开"], () => (st.auto_resume ? 1 : 0), (i) => (st.auto_resume = i === 1)],
+      ["指针锁定", ["关", "开"], () => (st.pointer_lock ? 1 : 0), (i) => (st.pointer_lock = i === 1)],
+      ["砖块掉落", ["关", "开"], () => (st.drops ? 1 : 0), (i) => (st.drops = i === 1)],
       ["音乐音量", [...Array(11)].map((_, i) => i * 10 + "%"), () => Math.round(st.music * 10), (i) => (st.music = i / 10)],
       ["音效音量", [...Array(11)].map((_, i) => i * 10 + "%"), () => Math.round(st.sfx * 10), (i) => (st.sfx = i / 10)],
       ["显示帧率", ["关", "开"], () => (st.show_fps ? 1 : 0), (i) => (st.show_fps = i === 1)],
@@ -799,7 +833,7 @@
         <div class="sep"></div>
         <div class="set-row"><label>存档 · 已通关 ${Object.keys(State.meta.cleared).length} / 48</label>
           <button id="b-reset" style="width:170px">重置全部进度</button></div>
-        <div style="font-size:10px;color:rgba(111,143,132,.6)">本地存档键：${ST.SAVE_KEY}（浏览器 localStorage）</div>
+        <div style="font-size:10px;color:rgba(111,143,132,.6)">平台 ${BP_PLATFORM.kind.toUpperCase()} · 存档键 ${ST.SAVE_KEY}（${BP_PLATFORM.store.backend === "native" ? "本地文件" : BP_PLATFORM.store.backend === "local" ? "localStorage" : "内存（临时）"}）</div>
         <div class="btns"><button class="btn" id="b-back" style="max-width:200px">返回</button></div>
       </div>
     `);
@@ -832,15 +866,17 @@
   function nearest(arr, v) { return arr.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a)); }
 
   // ================================================================ 暂停
-  function showPause() {
+  function showPause(reason) {
     if (state !== "play") return;
     state = "paused"; sim.paused = true;
+    const autoNote = reason === "leave" ? "鼠标移出画面，已自动暂停 · 回到画面即继续"
+      : reason === "blur" ? "窗口失去焦点，已自动暂停" : "";
     const inRun = battleCtx && battleCtx.mode !== "classic";
     const root = setScreen(`
       <div class="dim"></div>
       <div class="panel" style="min-width:420px">
         <h2>暂停</h2>
-        <div class="sub">PAUSED · 模拟已停止</div>
+        <div class="sub">${autoNote || "PAUSED · 模拟已停止"}</div>
         <div class="btns" style="flex-direction:column">
           <button class="btn" id="b-resume">继续</button>
           ${inRun ? '<button class="btn" id="b-build">查看构筑</button>' : ""}
@@ -861,6 +897,8 @@
   function resume() {
     if (state !== "paused") return;
     state = "play"; sim.paused = false; screenEl.innerHTML = ""; hud.classList.remove("hidden"); acc = 0;
+    autoPausedBy = null;
+    resetMouseAnchor();
   }
 
   // ================================================================ HUD
@@ -916,30 +954,94 @@
     const r = stage.getBoundingClientRect();
     return { x: ((e.clientX - r.left) / r.width) * C.W, y: ((e.clientY - r.top) / r.height) * C.H };
   }
-  let lastMouse = { x: C.W / 2, y: 0 };
+
+  let lastMouse = { x: C.PADDLE_MID, y: 0 };
+  let mouseInside = true;
+  let leaveTimer = 0;
+  let autoPausedBy = null;          // "leave" | "blur" —— 区分自动暂停与手动暂停
+  let touchAnchor = null;           // 触屏相对拖动锚点，避免挡板瞬移到手指底下
+  let lockX = C.PADDLE_MID;
+
+  function resetMouseAnchor() {
+    const x = sim ? sim.paddleX : C.PADDLE_MID;
+    lastMouse.x = x; lastMouse.y = C.H * 0.85;
+    lockX = x;
+  }
+  function pauseAuto(by) {
+    if (state !== "play") return;
+    autoPausedBy = by;
+    showPause(by);
+  }
+  function tryAutoResume() {
+    if (state !== "paused" || !autoPausedBy || !State.settings.auto_resume) return;
+    autoPausedBy = null;
+    resetMouseAnchor();
+    resume();
+  }
+
   stage.addEventListener("mousemove", (e) => {
+    if (document.pointerLockElement === stage) {
+      lockX = BP.clamp(lockX + e.movementX / (scale || 1), C.WALL_L, C.WALL_R);
+      lastMouse.x = lockX;
+      if (state === "play") inputMode = "mouse";
+      return;
+    }
     const p = logical(e);
     const dx = p.x - lastMouse.x, dy = p.y - lastMouse.y;
     lastMouse = p;
     if (state === "play" && Math.hypot(dx, dy) > C.MOUSE_SWITCH) inputMode = "mouse";
   });
-  stage.addEventListener("mousedown", () => {
-    Sfx.init(); Sfx.resume(); Music.start();
-    if (state === "play" && sim && sim.phase === PHASE.SERVE) sim.launch();
+
+  // 鼠标移出画面：默认自动暂停。这是「球在飞、指针滑出窗口、挡板留在原地必失球」的根治办法。
+  stage.addEventListener("mouseleave", () => {
+    mouseInside = false;
+    if (!State.settings.pause_on_leave) return;
+    if (state !== "play" || inputMode !== "mouse") return;
+    clearTimeout(leaveTimer);
+    leaveTimer = setTimeout(() => { if (!mouseInside && state === "play") pauseAuto("leave"); }, 80);
   });
+  stage.addEventListener("mouseenter", () => {
+    mouseInside = true;
+    clearTimeout(leaveTimer);
+    resetMouseAnchor();
+    if (autoPausedBy === "leave") tryAutoResume();
+  });
+
+  stage.addEventListener("mousedown", (e) => {
+    Sfx.init(); Sfx.resume(); Music.start();
+    if (State.settings.pointer_lock && document.pointerLockElement !== stage && stage.requestPointerLock) {
+      const r = stage.requestPointerLock();
+      if (r && r.catch) r.catch(() => {});
+    }
+    if (state === "play" && sim && sim.phase === PHASE.SERVE) sim.launch();
+    if (e.button === 2) e.preventDefault();
+  });
+  stage.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // 触屏：按下时记录「挡板 — 手指」偏移，之后按相对位移移动，手指不会挡住挡板
   stage.addEventListener("touchstart", (e) => {
     Sfx.init(); Sfx.resume(); Music.start();
-    if (state === "play" && sim) {
-      const p = logical(e.touches[0]);
-      inputMode = "mouse"; sim.setPaddleTarget(p.x, C.MOUSE_SPEED);
-      if (sim.phase === PHASE.SERVE) sim.launch();
-    }
+    if (state !== "play" || !sim) return;
+    const p = logical(e.touches[0]);
+    inputMode = "mouse";
+    touchAnchor = sim.paddleX - p.x;
+    sim.setPaddleTarget(sim.paddleX, C.MOUSE_SPEED);
+    if (sim.phase === PHASE.SERVE) sim.launch();
   }, { passive: true });
   stage.addEventListener("touchmove", (e) => {
     if (state !== "play" || !sim) return;
-    sim.setPaddleTarget(logical(e.touches[0]).x, C.MOUSE_SPEED);
+    const p = logical(e.touches[0]);
+    const x = anchorClamp(touchAnchor, p.x);
+    lastMouse.x = x;
+    sim.setPaddleTarget(x, C.MOUSE_SPEED);
     e.preventDefault();
   }, { passive: false });
+  stage.addEventListener("touchend", () => { touchAnchor = null; }, { passive: true });
+
+  function anchorClamp(anchor, x) {
+    const v = (anchor == null ? x : x + anchor);
+    return Math.max(C.WALL_L, Math.min(C.WALL_R, v));
+  }
 
   const keys = {};
   window.addEventListener("keydown", (e) => {
@@ -949,19 +1051,31 @@
     if (state === "play") {
       if (["ArrowLeft", "ArrowRight", "KeyA", "KeyD"].includes(e.code)) inputMode = "keyboard";
       if (e.code === "Space" && sim && sim.phase === PHASE.SERVE) sim.launch();
-      if (e.code === "Escape" || e.code === "KeyP") showPause();
+      if (e.code === "Escape" || e.code === "KeyP") { autoPausedBy = null; showPause(); }
       if (e.code === "Tab") { e.preventDefault(); showBuild(); }
-    } else if (state === "paused" && (e.code === "Escape" || e.code === "KeyP")) resume();
+      if (e.code === "KeyF") BP_PLATFORM.toggleFullscreen();
+    } else if (state === "paused" && (e.code === "Escape" || e.code === "KeyP")) { autoPausedBy = null; resume(); }
   });
   window.addEventListener("keyup", (e) => { keys[e.code] = false; });
-  window.addEventListener("blur", () => { if (state === "play") showPause(); });
-  document.addEventListener("visibilitychange", () => { if (document.hidden && state === "play") showPause(); });
+  window.addEventListener("blur", () => {
+    mouseInside = false;
+    if (state === "play") pauseAuto("blur");
+  });
+  window.addEventListener("focus", () => {
+    if (autoPausedBy === "blur") tryAutoResume();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state === "play") pauseAuto("blur");
+    else if (!document.hidden && autoPausedBy === "blur") tryAutoResume();
+  });
 
   function syncInput(dt) {
     if (!sim) return;
     if (sim.phase === PHASE.CLEAR || sim.phase === PHASE.FAIL) return;
-    if (inputMode === "mouse") sim.setPaddleTarget(lastMouse.x, C.MOUSE_SPEED);
-    else {
+    if (inputMode === "mouse") {
+      const x = Math.max(C.WALL_L, Math.min(C.WALL_R, lastMouse.x));
+      sim.setPaddleTarget(x, C.MOUSE_SPEED);
+    } else {
       let dir = 0;
       if (keys.KeyA || keys.ArrowLeft) dir -= 1;
       if (keys.KeyD || keys.ArrowRight) dir += 1;
@@ -993,9 +1107,17 @@
   }
 
   // ================================================================ 启动
+  if (BP_PLATFORM.isTouch) document.body.classList.add("touch");
+  if (BP_PLATFORM.isMobile) document.body.classList.add("mobile");
   State.load();
   applySettings();
   showMenu();
+
+  BP_PLATFORM.onBack(() => {
+    if (state === "play") showPause();
+    else if (state === "paused") resume();
+    else if (state !== "menu") showMenu();
+  });
 
   document.addEventListener("pointerdown", () => { Sfx.init(); Sfx.resume(); Music.start(); }, { once: true });
   document.addEventListener("keydown", () => { Sfx.init(); Sfx.resume(); Music.start(); }, { once: true });

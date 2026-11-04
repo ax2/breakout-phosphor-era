@@ -40,7 +40,11 @@ function send(method, params) {
 }
 
 await send("Page.enable");
-await send("Emulation.setDeviceMetricsOverride", { width: VW, height: VH, deviceScaleFactor: 1, mobile: VW < 600 });
+await send("Emulation.setDeviceMetricsOverride", { width: VW, height: VH, deviceScaleFactor: 1, mobile: VW < 600 || !!process.env.TOUCH });
+if (process.env.TOUCH) {
+  // 让 matchMedia("(pointer: coarse)") 真的为真，才能验证 body.touch 分支
+  await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+}
 await send("Runtime.enable");
 await send("Page.navigate", { url });
 await new Promise((r) => setTimeout(r, waitMs));

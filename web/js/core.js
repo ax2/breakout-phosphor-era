@@ -11,7 +11,7 @@
     CEIL: 56, DEATH: 706,
     PADDLE_TOP: 648, PADDLE_H: 14, PADDLE_W: 132,
     BALL_R: 7,
-    BASE_SPEED: 520, MAX_SPEED: 940, SPEED_PER_BRICK: 2.6,
+    BASE_SPEED: 535, MAX_SPEED: 940, SPEED_PER_BRICK: 3.4,
     MIN_VY: 0.16, MAX_CONTACTS: 8,
     PADDLE_ANGLE: 62, PADDLE_MAX_ANGLE: 74, PADDLE_INFLUENCE: 0.14,
     KEY_SPEED: 1080, MOUSE_SPEED: 6200, MOUSE_SWITCH: 6,
@@ -20,10 +20,17 @@
     STALL_EPS: 0.10, STALL_TIME: 1.1,
     ASSIST_TIME: 5.0, ECHO_COUNT: 3, ECHO_RATE: 0.55, ECHO_FORCE: 1.5,
     IDLE_RESCUE: 7.0,
+    // 收束：只剩最后几块又久攻不下时，残响每 4.5 秒直接打一发，
+    // 把"满地图找最后一块砖"的磨损砍掉，但只在收尾阶段生效。
+    ENDGAME_COUNT: 4, ENDGAME_TICK: 4.5, ENDGAME_IDLE: 2.2,
+    // 兜底：若连续 10 秒一发未中（几何死角 / 球在空腔里空转），残响直接补一发，
+    // 保证任何关卡都不会因为"够不到最后几块砖"而永久卡死。
+    STALL_RESCUE: 10.0,
     SCORE_BRICK: 10, SCORE_TOUGH: 25, SCORE_ARMORED: 40, SCORE_BLAST: 30,
     COMBO_BONUS: 0.25,
     MAX_PARTICLES: 900, MAX_RINGS: 48, TRAIL: 18, MAX_BALLS: 12,
     SHIELD_Y: 700,
+    DROP_FALL: 176, DROP_R: 15, DROP_TTL: 14, DROP_WIDE: 46,
   };
   C.PADDLE_MIN_X = C.WALL_L + C.PADDLE_W / 2;
   C.PADDLE_MAX_X = C.WALL_R - C.PADDLE_W / 2;
@@ -42,13 +49,30 @@
     core: { hp: 12, score: 200, solid: false, label: "核心" },
     armorPlate: { hp: 6, score: 60, solid: false, label: "护甲" },
     weakPoint: { hp: 3, score: 80, solid: false, label: "弱点" },
+    gold: { hp: 1, score: 45, solid: false, label: "金砖" },
+    moving: { hp: 1, score: 25, solid: false, label: "游走" },
   };
 
   const TYPE_COLOR = {
     normal: "#6be39a", tough: "#7fc8ff", armored: "#ffc46b",
     blast: "#ff6b7e", solid: "#7d8b93", regen: "#8ee6c8",
     shieldNode: "#b39cff", core: "#ff9d5c", armorPlate: "#c9a227", weakPoint: "#ff5f8a",
+    gold: "#ffd479", moving: "#7fd8ff",
   };
+
+  // 掉落物：砖块破碎时按概率脱落，接住即生效（临时增益，不写入构筑）
+  const DROPS = {
+    multi:  { color: "#7cffb2", glyph: "◉", label: "多球",  weight: 12 },
+    wide:   { color: "#7fd8ff", glyph: "↔", label: "加宽",  weight: 14 },
+    laser:  { color: "#ffc46b", glyph: "↟", label: "激光",  weight: 10 },
+    shield: { color: "#b39cff", glyph: "▣", label: "护盾",  weight: 8 },
+    magnet: { color: "#8ee6c8", glyph: "⌁", label: "磁吸",  weight: 8 },
+    slow:   { color: "#9fb3bd", glyph: "◷", label: "减速",  weight: 9 },
+    gold:   { color: "#ffd479", glyph: "◆", label: "碎片",  weight: 16 },
+    life:   { color: "#ff6b7e", glyph: "♥", label: "备用球", weight: 3 },
+  };
+  const DROP_KEYS = Object.keys(DROPS);
+  const DROP_TOTAL = DROP_KEYS.reduce((a, k) => a + DROPS[k].weight, 0);
 
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -115,6 +139,20 @@
     return { x: (nx / l) * mag, y: (ny / l) * mag };
   }
 
+  // 只限制最小垂直分量时，球会在竖井里以 vx=0 永远上下弹、碰不到任何砖。
+  // 这里再保底一个最小水平分量，把"完美竖直"这个退化轨形排除掉。
+  function clampH(vx, vy, minVx) {
+    const mag = Math.hypot(vx, vy);
+    if (mag < 1e-9) return { x: 0, y: 0 };
+    const dx = vx / mag, dy = vy / mag;
+    if (Math.abs(dx) >= minVx) return { x: vx, y: vy };
+    // 退化到完全竖直时的兜底方向：用确定性的符号，避免 Math.random 破坏回放/测量可复现性
+    const sgn = dx > 1e-9 ? 1 : dx < -1e-9 ? -1 : (dy >= 0 ? 1 : -1);
+    const nx = sgn * minVx;
+    const ny = (dy >= 0 ? 1 : -1) * Math.sqrt(Math.max(0, 1 - nx * nx));
+    return { x: nx * mag, y: ny * mag };
+  }
+
   function reflect(vx, vy, nx, ny) {
     const d = vx * nx + vy * ny;
     return { x: vx - 2 * d * nx, y: vy - 2 * d * ny };
@@ -127,6 +165,12 @@
     this.maxHp = def.hp; this.hp = def.hp;
     this.alive = true;
     this.rect = rect || { x: C.GRID_X + col * C.BRICK_W, y: C.GRID_Y + row * C.BRICK_H, w: C.BRICK_W, h: C.BRICK_H };
+    this.baseX = this.rect.x;
+    this.move = null;
+    if (type === "moving") {
+      const dir = (row % 2 === 0) ? 1 : -1;
+      this.move = { amp: 22, spd: 0.9 + (col % 3) * 0.18, phase: col * 0.8 + row * 1.7, dir };
+    }
     // 状态
     this.burn = 0; this.burnDps = 0;
     this.frozen = 0;
@@ -188,6 +232,14 @@
     b.alive = false;
     this.cells[b.row * this.cols + b.col] = null;
     if (b.solid()) this.solidsAlive--; else this.destructibleAlive--;
+  };
+  Grid.prototype.tick = function (dt) {
+    for (const b of this.cells) {
+      if (!b || !b.alive || !b.move) continue;
+      b.move.phase += dt * b.move.spd;
+      const x = b.baseX + Math.sin(b.move.phase) * b.move.amp * b.move.dir;
+      b.rect.x = clamp(x, C.WALL_L, C.WALL_R - b.rect.w);
+    }
   };
   Grid.prototype.aliveBricks = function () {
     const out = [];
@@ -274,7 +326,7 @@
       shieldCharges: 0, shieldMax: 0,
       goldBonus: 0, xpBonus: 0, comboBonus: 1,
       bounceDamage: 0, lastStand: false,
-      lifesteal: 0,
+      lifesteal: 0, dropRate: 1,
     };
   }
 
@@ -305,13 +357,18 @@
     this.mods = defaultStats();
     this.baseMods = null;
     this._resetT = 0; this._lastBreak = -99; this._lastBrickT = 0;
-    this._nearestT = 0; this._chain = 0; this._cleared = false;
+    this._nearestT = 0; this._chain = 0; this._cleared = false; this._endT = C.ENDGAME_TICK;
     this.hooks = {};
     this.boss = null;
     this.shield = 0;
     this.laserT = 0; this.droneT = 0;
     this.hitStop = 0;
     this.bonusBricks = 0;
+    this.drops = [];
+    this.buffs = { wide: 0, laser: 0, magnet: 0, slow: 0 };
+    this.dropsEnabled = true;
+    this.picked = 0;
+    this.bonusGold = 0;
   }
 
   Sim.prototype.on = function (name, fn) { this.hooks[name] = fn; };
@@ -348,13 +405,18 @@
     this.score = 0; this.combo = 0; this.bestCombo = 0;
     this.time = 0; this.levelTime = 0; this.paused = false;
     this.assistActive = false; this.assistReason = ""; this.assistTarget = null;
-    this._cleared = false; this._lastBreak = -99; this._lastBrickT = 0;
+    this._cleared = false; this._lastBreak = -99; this._lastBrickT = 0; this._endT = C.ENDGAME_TICK;
     for (const k in this.stats) this.stats[k] = 0;
     this.balls = [];
     this.boss = null;
     this.shield = this.mods.shieldCharges || 0;
     this.laserT = this.mods.laserCd || 0;
     this.droneT = 2.5;
+    this.drops.length = 0;
+    for (const k in this.buffs) this.buffs[k] = 0;
+    this.picked = 0;
+    this.bonusGold = 0;
+    this.paddleW = this.mods.paddleW;
     this._spawnServe();
     this.phase = PHASE.SERVE;
     this.speed = Math.min(this.mods.startSpeed, this.mods.maxSpeed);
@@ -389,6 +451,8 @@
     const spd = Math.min(this.mods.startSpeed, this.mods.maxSpeed);
     b.vx = Math.sin(ang) * spd;
     b.vy = -Math.cos(ang) * spd;
+    const lch = clampH(b.vx, b.vy, 0.11);
+    b.vx = lch.x; b.vy = lch.y;
     b.trail.length = 0;
     b.sinceBrick = 0;
     this.phase = PHASE.PLAY;
@@ -406,15 +470,18 @@
         b.x = this.paddleX; b.y = C.PADDLE_TOP - C.BALL_R - 1; b.pushTrail();
       }
       this._tickSystems(dt);
+      this._tickDropFall(dt);
       return;
     }
     if (this.phase === PHASE.RESET) {
       this._resetT -= dt;
       this._tickSystems(dt);
+      this._tickDropFall(dt);
       if (this._resetT <= 0) { this._spawnServe(); this.phase = PHASE.SERVE; }
       return;
     }
 
+    if (this.grid) { this.grid.tick(dt); this._tickDrops(dt); }
     for (const b of this.balls) if (b.active) this._stepBall(b, dt);
     this._tickStatuses(dt);
     this._tickSystems(dt);
@@ -427,10 +494,11 @@
 
   Sim.prototype._tickSystems = function (dt) {
     // 激光
-    if (this.mods.laserCd > 0 && this.phase === PHASE.PLAY) {
+    const laserOn = this.mods.laserCd > 0 || this.buffs.laser > 0;
+    if (laserOn && this.phase === PHASE.PLAY) {
       this.laserT -= dt;
       if (this.laserT <= 0) {
-        this.laserT = this.mods.laserCd;
+        this.laserT = this.mods.laserCd > 0 ? this.mods.laserCd : 1.05;
         const target = this._lowestBrickNear(this.paddleX, 260);
         if (target) {
           this._damageBrick(target, this.mods.laserDamage, { x: this.paddleX, y: C.PADDLE_TOP - 10 }, "laser");
@@ -438,6 +506,33 @@
         }
       }
     }
+    // 收束打击：最后几块砖久攻不下时，残响直接补一发
+    if (this.phase === PHASE.PLAY && this.grid) {
+      const alive = this.grid.destructibleAlive;
+      if (alive > 0 && alive <= C.ENDGAME_COUNT) {
+        this._endT -= dt;
+        if (this._endT <= 0 && (this.time - this._lastBrickT) >= C.ENDGAME_IDLE) {
+          const t = this._lowestBrickNear(this.paddleX, 1e9) || this.assistTarget;
+          if (t && t.alive && !t.solid() && !t.invuln) {
+            this._endT = C.ENDGAME_TICK;
+            this._damageBrick(t, 1, { x: t.cx(), y: t.cy() }, "laser");
+            this.emit("laser", this.paddleX, t.cx(), t.cy());
+            this.emit("endgame", alive);
+          }
+        }
+      } else this._endT = C.ENDGAME_TICK;
+    }
+    // 死角兜底：任何关卡连续 10 秒零命中就补一发，只打可破坏砖，不碰护盾结构
+    if (this.phase === PHASE.PLAY && (this.time - this._lastBrickT) >= C.STALL_RESCUE) {
+      const t = this._lowestBrickNear(this.paddleX, 1e9);
+      if (t && t.alive && !t.solid() && !t.invuln) {
+        this._damageBrick(t, 1, { x: t.cx(), y: t.cy() }, "laser");
+        this.emit("laser", this.paddleX, t.cx(), t.cy());
+        this.emit("assist", "残响补射：长时间未命中");
+        this._lastBrickT = this.time;
+      }
+    }
+
     // 无人机
     if (this.mods.drones > 0 && this.phase === PHASE.PLAY) {
       this.droneT -= dt;
@@ -451,6 +546,116 @@
         }
       }
     }
+  };
+
+  // ---------------------------------------------------------------- 掉落物
+  Sim.prototype._rollDrop = function () {
+    let t = this.rng.next() * DROP_TOTAL;
+    for (const k of DROP_KEYS) {
+      t -= DROPS[k].weight;
+      if (t <= 0) return k;
+    }
+    return "gold";
+  };
+
+  Sim.prototype._maybeDrop = function (brick, x, y) {
+    if (!this.dropsEnabled || this.drops.length >= 6) return;
+    if (brick.isPart) return;
+    let chance = 0.055;
+    if (brick.type === "tough") chance = 0.085;
+    else if (brick.type === "armored") chance = 0.12;
+    else if (brick.type === "blast") chance = 0.16;
+    else if (brick.type === "regen") chance = 0.10;
+    else if (brick.type === "gold") chance = 0.42;
+    chance *= (this.mods.dropRate || 1);
+    if (this.rng.next() > chance) return;
+    const type = this._rollDrop();
+    this.drops.push({
+      x: clamp(x, C.WALL_L + C.DROP_R, C.WALL_R - C.DROP_R),
+      y: y, vy: 0, type: type, age: 0, ph: this.rng.range(0, 6.28), sway: this.rng.range(-22, 22),
+    });
+    this.emit("dropSpawned", type, x, y);
+  };
+
+  Sim.prototype._tickDropFall = function (dt) {
+    for (let i = this.drops.length - 1; i >= 0; i--) {
+      const d = this.drops[i];
+      d.age += dt;
+      d.vy = Math.min(C.DROP_FALL, d.vy + 520 * dt);
+      d.y += d.vy * dt;
+      d.ph += dt * 3.2;
+      // 磁吸：接近底板时朝挡板漂
+      const mag = this.mods.magnet + (this.buffs.magnet > 0 ? 1 : 0);
+      if (mag > 0 && d.y > C.PADDLE_TOP - 220) {
+        d.x += clamp(this.paddleX - d.x, -1, 1) * 78 * dt;
+      } else {
+        d.x += Math.sin(d.ph) * d.sway * dt;
+      }
+      if (d.age > C.DROP_TTL || d.y - C.DROP_R > C.DEATH) {
+        this.drops.splice(i, 1);
+        this.emit("dropMiss", d.type, d.x, d.y);
+      }
+    }
+  };
+
+  Sim.prototype._tickDrops = function (dt) {
+    // 临时增益倒计时
+    let changed = false;
+    for (const k in this.buffs) {
+      if (this.buffs[k] > 0) {
+        this.buffs[k] = Math.max(0, this.buffs[k] - dt);
+        if (this.buffs[k] === 0) changed = true;
+      }
+    }
+    if (changed) this._syncPaddleWidth();
+    this._tickDropFall(dt);
+
+    // 接住判定
+    const half = this.paddleW / 2;
+    const px = this.paddleX - half;
+    for (let i = this.drops.length - 1; i >= 0; i--) {
+      const d = this.drops[i];
+      if (d.y + C.DROP_R < C.PADDLE_TOP - 2) continue;
+      if (d.y - C.DROP_R > C.PADDLE_TOP + C.PADDLE_H + 8) continue;
+      if (d.x < px - C.DROP_R || d.x > px + this.paddleW + C.DROP_R) continue;
+      this.drops.splice(i, 1);
+      this._applyDrop(d.type, d.x, d.y);
+    }
+  };
+
+  Sim.prototype._syncPaddleWidth = function () {
+    const target = this.mods.paddleW + (this.buffs.wide > 0 ? C.DROP_WIDE : 0);
+    if (Math.abs(target - this.paddleW) < 0.5) return;
+    this.paddleW = target;
+    const half = this.paddleW / 2;
+    this.paddleX = clamp(this.paddleX, C.WALL_L + half, C.WALL_R - half);
+    this.paddleTarget = clamp(this.paddleTarget, C.WALL_L + half, C.WALL_R - half);
+  };
+
+  Sim.prototype._applyDrop = function (type, x, y) {
+    this.picked++;
+    this.score += 5;
+    switch (type) {
+      case "multi":
+        if (this.balls.length < C.MAX_BALLS) this._spawnExtraBall(x, C.PADDLE_TOP - 20);
+        break;
+      case "wide":
+        this.buffs.wide = 14; this._syncPaddleWidth(); break;
+      case "laser":
+        this.buffs.laser = 12; this.laserT = Math.min(this.laserT, 0.35); break;
+      case "shield":
+        this.shield = Math.min(3, this.shield + 1); break;
+      case "magnet":
+        this.buffs.magnet = 12; break;
+      case "slow":
+        this.buffs.slow = 9; break;
+      case "gold":
+        this.bonusGold += 5; break;
+      case "life":
+        this.lives = Math.min(9, this.lives + 1); break;
+      default: break;
+    }
+    this.emit("pickup", type, x, y, DROPS[type] ? DROPS[type].label : "");
   };
 
   Sim.prototype._lowestBrickNear = function (x, range) {
@@ -480,6 +685,7 @@
   };
 
   Sim.prototype._stepBall = function (b, dt) {
+    if (this.buffs.slow > 0) dt *= 0.8;
     b.sinceBrick += dt; b.idle += dt;
     let remaining = dt, guard = 0;
     while (remaining > 1e-7 && guard < C.MAX_CONTACTS) {
@@ -555,7 +761,8 @@
     else if (hit.kind === "wall") {
       const r = reflect(b.vx, b.vy, hit.nx, hit.ny);
       const c = clampV(r.x, r.y, C.MIN_VY);
-      b.vx = c.x; b.vy = c.y;
+      const h = clampH(c.x, c.y, 0.10);
+      b.vx = h.x; b.vy = h.y;
       this.stats.wall++; this.stats.bounces++;
       this.emit("wallBounce", b.x, b.y, hit.nx, hit.ny);
     } else this._hitBrick(b, hit.obj, hit.nx, hit.ny);
@@ -572,6 +779,8 @@
     if (spd < 1) spd = this.speed;
     b.vx = Math.sin(ang) * spd;
     b.vy = -Math.cos(ang) * spd;
+    const ch = clampH(b.vx, b.vy, 0.13);
+    b.vx = ch.x; b.vy = ch.y;
     b.y = Math.min(b.y, C.PADDLE_TOP - b.r - 0.02);
     b.sinceBrick = 0; b.stall = 0; b.idle = 0;
     this.stats.bounces++;
@@ -582,11 +791,12 @@
       b.dmgBonus = Math.min(3, b.dmgBonus + 0); // 由伤害计算读取
     }
     // 磁吸：接球后轻微回正
-    if (this.mods.magnet > 0) {
+    const magnet = this.mods.magnet + (this.buffs.magnet > 0 ? 1 : 0);
+    if (magnet > 0) {
       const s = b.speed();
       const d = b.dir();
       const toward = Math.sign(this.paddleX - b.x);
-      b.vx = (d.x + toward * 0.06 * this.mods.magnet) * s;
+      b.vx = (d.x + toward * 0.06 * magnet) * s;
       b.vy = d.y * s;
       const c = clampV(b.vx, b.vy, C.MIN_VY);
       b.vx = c.x; b.vy = c.y;
@@ -646,7 +856,8 @@
     }
     const r = reflect(b.vx, b.vy, nx, ny);
     const c = clampV(r.x, r.y, C.MIN_VY);
-    b.vx = c.x; b.vy = c.y;
+    const h = clampH(c.x, c.y, 0.08);
+    b.vx = h.x; b.vy = h.y;
     this.stats.bounces++;
   };
 
@@ -704,6 +915,7 @@
       }
     }
 
+    this._maybeDrop(brick, atx, aty);
     this.speed = Math.min(this.mods.maxSpeed, this.speed + C.SPEED_PER_BRICK);
     for (const b of this.balls) {
       if (b.attached || !b.active) continue;
@@ -923,7 +1135,8 @@
     this._nearestT -= C.FIXED;
     const idleFor = this.time - this._lastBrickT;
     let want = false, reason = "";
-    const alive = this.grid ? this.grid.destructibleAlive : 99;
+    // Boss 战没有网格砖块，必须把 Boss 部件算进来，否则救援在 Boss 关完全失效
+    const alive = this._allBricks().filter((b) => b.alive && !b.solid() && !b.invuln).length;
     if (alive > 0 && alive <= C.ECHO_COUNT) { want = true; reason = "残响引导 · 弱点标记"; }
     else if (idleFor >= C.ASSIST_TIME && alive > 0) { want = true; reason = "残响引导 · 长时间未命中"; }
     if (idleFor >= C.IDLE_RESCUE && alive > 0) reason = "轨迹救援";
@@ -947,6 +1160,15 @@
     }
   };
 
+  Sim.prototype.buffReport = function () {
+    const out = [];
+    if (this.buffs.wide > 0) out.push({ k: "wide", t: this.buffs.wide, label: DROPS.wide.label, color: DROPS.wide.color });
+    if (this.buffs.laser > 0) out.push({ k: "laser", t: this.buffs.laser, label: DROPS.laser.label, color: DROPS.laser.color });
+    if (this.buffs.magnet > 0) out.push({ k: "magnet", t: this.buffs.magnet, label: DROPS.magnet.label, color: DROPS.magnet.color });
+    if (this.buffs.slow > 0) out.push({ k: "slow", t: this.buffs.slow, label: DROPS.slow.label, color: DROPS.slow.color });
+    return out;
+  };
+
   Sim.prototype.summary = function (win, clearBonus) {
     return {
       win, level_id: this.levelId, level_name: this.levelName,
@@ -955,6 +1177,7 @@
       max_combo: Math.max(this.stats.maxCombo, this.bestCombo),
       assists: this.stats.assists, clear_bonus: clearBonus,
       damage: this.stats.damage,
+      picked: this.picked, pickedGold: this.bonusGold,
     };
   };
   Sim.prototype.ballSpeed = function () {
@@ -998,6 +1221,7 @@
     this.phase = 0;
     this.t = 0;
     this.state = {};
+    this.syncHp();
     this.applyPhase(0, sim, true);
   };
 
@@ -1019,8 +1243,9 @@
 
   Boss.prototype.onPartDestroyed = function (part, sim) {
     part.alive = false;
-    if (part.role === "core") this.hp = 0;
     if (this.def.onPart) this.def.onPart(this, part, sim);
+    // 必须在 _checkClear 之前把血量算准，否则打掉最后一个核心的同一帧不会判通关
+    this.syncHp();
     // 护甲全灭 → 核心暴露
     const armorAlive = this.parts.filter((p) => p.alive && p.role === "armor").length;
     const cores = this.parts.filter((p) => p.alive && p.role === "core");
@@ -1043,6 +1268,20 @@
     }
   };
 
+  Boss.prototype.syncHp = function () {
+    // 多核心 Boss（冰镜双核）血量按所有核心求和，单一核心时等价于 core.hp
+    let hp = 0, maxHp = 0, any = false;
+    for (const p of this.parts) {
+      if (p.role !== "core") continue;
+      any = true;
+      maxHp += p.maxHp;
+      if (p.alive) hp += Math.max(0, p.hp);
+    }
+    if (!any) return;
+    this.maxHp = maxHp;
+    this.hp = Math.max(0, hp);
+  };
+
   Boss.prototype.tick = function (dt, sim) {
     this.t += dt;
     if (this.telegraph) {
@@ -1051,17 +1290,19 @@
     }
     if (this.window > 0) this.window -= dt;
     if (this.def.tick) this.def.tick(this, sim, dt);
-    // 核心可被击中时同步血量
-    const core = this.parts.find((p) => p.role === "core" && p.alive);
-    if (core) this.hp = Math.max(0, core.hp);
+    this.syncHp();
     this.checkPhase(sim);
   };
 
-  const LEGEND = { "#": "normal", T: "tough", A: "armored", B: "blast", X: "solid", R: "regen", S: "shieldNode" };
+  const LEGEND = {
+    "#": "normal", T: "tough", A: "armored", B: "blast", X: "solid", R: "regen", S: "shieldNode",
+    G: "gold", M: "moving",
+  };
 
   const BP = {
     C, PHASE, TYPES, TYPE_COLOR, XRand, Brick, Grid, Ball, Sim, Boss, LEGEND,
-    circleRect, clampV, clamp, reflect, defaultStats,
+    circleRect, clampV, clampH, clamp, reflect, defaultStats,
+    DROPS, DROP_KEYS, DROP_TOTAL,
   };
   root.BP = BP;
   if (typeof module !== "undefined" && module.exports) module.exports = BP;

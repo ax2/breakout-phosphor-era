@@ -3,9 +3,16 @@
 手工关卡打砖块。固定 120Hz 步长 + 扫掠碰撞，磷光终端美学，原创程序化音效，
 外加远征构筑：一局之内靠三选一形成打法，死亡后保留解锁。
 
-- 网页版：`0.4.0-full`（6 章 48 关 / 6 Boss / 3 模式）
-- Windows 版：`0.3.0-stage03`（Godot 4.7.1，**内容已与网页版对齐**：48 关 / 6 Boss / 3 模式 / 构筑）
-- 网页版：原生 HTML5，零依赖
+**同一套核心，三端共用**：`web/` 就是全部游戏实现，桌面端与移动端只是外壳。
+
+| 端 | 形态 | 说明 |
+|---|---|---|
+| Web | `web/index.html` | 零依赖原生 HTML5，双击即玩 |
+| Windows / macOS / Linux | `shells/desktop/`（Electron 45） | 直接 `loadFile` 同一份 `web/`，存档落 `userData/save.json` |
+| 移动端 | PWA（`manifest.webmanifest` + `sw.js`） | 全屏横屏、安全区适配、触屏拖动、离线可玩 |
+
+- 网页版：`0.5.0-full`（6 章 48 关 / 6 Boss / 4 模式）
+- Godot 版：`0.3.0-stage03`（内容已与网页版对齐，代码仍在仓库里作为第二实现）
 - 两版**共用同一份内容数据**：`web/js/content.js` 是唯一源，`tools/port_content.js` 生成 `data/content.json` 给 Godot 读
 
 **在线试玩（免安装）**：https://ax2.github.io/breakout-phosphor-era/
@@ -18,21 +25,28 @@
 ### 方式一：直接在线玩（最省事）
 
 打开 https://ax2.github.io/breakout-phosphor-era/ ，桌面浏览器即可。
+手机浏览器打开同一地址，横屏后会提示「添加到主屏幕」，加完就是全屏 App。
 
-### 方式二：Windows 可执行包
+### 方式二：Windows 桌面端
 
-从 [Releases](https://github.com/ax2/breakout-phosphor-era/releases) 下载
-`BREAKOUT-PhosphorEra-win64-v0.4.0.zip`，解压后双击 `BreakoutPhosphorEra.exe`。
+```bash
+cd shells/desktop
+npm install
+npm start          # 开发运行
+npm run pack       # 打 NSIS 安装包 / 免安装 exe 到 shells/desktop/dist
+```
 
-> **`BreakoutPhosphorEra.pck` 必须与 exe 放在同一目录**，只拷 exe 会启动失败。
-> 首次运行 Windows 可能弹 SmartScreen（未签名），选择「更多信息 → 仍要运行」。
+存档在 `%APPDATA%/breakout-phosphor-era/save.json`，与浏览器存档互不影响。
+
+> 也保留了早期 Godot 导出包：`dist/BREAKOUT-PhosphorEra-win64-v0.4.0.zip`，
+> 解压后 `BreakoutPhosphorEra.pck` 必须与 exe 同目录。
 
 ### 方式三：直接双击 index.html
 
-网页版是纯静态、脚本之间没有模块拆分、也不发 `fetch`，所以在 Chrome / Edge 下
-**直接双击 `web/index.html` 就能玩**（实测进入关卡正常、存档可读写）。
+网页版是纯静态、脚本之间没有模块拆分；只有 Service Worker 需要 http(s)，
+纯 `file://` 下会自动跳过注册，游戏本体不受影响。
 
-如果某个浏览器因本地文件策略拦截，再用下面这条起服务器：
+如果某个浏览器因本地文件策略拦截，起个服务器：
 
 ```bash
 cd web
@@ -46,7 +60,7 @@ python -m http.server 8765 --bind 127.0.0.1
 npx serve web -l 8765
 ```
 
-### 方式四：Godot 编辑器（开发用）
+### 方式四：Godot 编辑器（第二实现，开发用）
 
 ```
 godot --path .        # 需要 Godot 4.7.1
@@ -61,19 +75,27 @@ godot --path .        # 需要 Godot 4.7.1
 | 鼠标移动 / A D / ← → | 移动挡板（两种输入自动仲裁，不会互抢） |
 | 空格 / Enter / 鼠标左键 | 发球 |
 | ESC / P | 暂停 |
+| F | 全屏 |
 | TAB | 查看本局构筑 |
+| 触屏 | 手指在屏幕任意位置横向拖动，挡板跟随相对位移 |
 
-发球方向由挡板位置决定：场地中线垂直向上，越靠边角度越大（±45°）。
+发球方向由挡板位置决定：场地中线垂直向上，越靠边角度越大（±62°）。
+
+**鼠标移出画面自动暂停**（默认开）：球在飞、指针滑出窗口时挡板会僵在原地，
+这是最容易被误判成「游戏 bug」的失球方式。现在移出即暂停，移回自动继续。
 
 ---
 
 ## 内容
 
 - 6 章 × 8 关 = 48 个手工关卡，逐关解锁
-- 6 个 Boss（2–3 阶段、护甲/弱点窗口）
+- 6 个 Boss（2–3 阶段、护甲/弱点窗口、独立行为）
 - 6 个构筑方向 × 6 项升级 = 36 项，全部有实际效果
 - 18 件遗物、6 种挡板、12 组协同、12 个事件
-- 3 种模式：经典 / 远征 / 无尽
+- **4 种模式**：经典 / 远征 / 无尽 / 每日挑战
+  - 每日挑战：日期哈希出固定种子 + 7 套规则变体（窄挡板、加速、少命、无掉落…），所有人当天同一副牌
+- **8 种掉落物**：多重球、加宽、激光、护盾、磁吸、减速、金砖、加命
+- **2 种新砖型**：金砖（G，高分高掉落率）、游走砖（M，横向漂移）
 - 8 个成就、五分类图鉴、存档 v3（含迁移）
 
 ---
@@ -81,23 +103,21 @@ godot --path .        # 需要 Godot 4.7.1
 ## 目录
 
 ```
-web/                     网页版（内容源 + 主交付）
-  js/core.js             模拟核心：扫掠碰撞、状态效果、构筑属性、Boss 框架
+web/                     网页版（= 三端共用的全部游戏实现）
+  js/platform.js         平台适配层：存储/震动/安全区/全屏/返回键，三级降级
+  js/core.js             模拟核心：扫掠碰撞、状态效果、掉落物、Boss 框架
   js/content.js          内容数据：关卡/Boss/升级/遗物/挡板/事件/协同（唯一源）
-  js/run.js              三种模式、远征流程、局外进度、存档
-  js/render.js           Canvas 绘制与特效
-  js/ui.js               界面、音频、主循环
-src/                     Godot 版（0.3.0-stage03，内容与网页版对齐）
-  core/content_db.gd     读 data/content.json；level_db.gd 转发保持旧接口
-  sim/breakout_sim.gd    模拟层：物理 + mods 属性层 + 状态效果 + 被动系统
-  sim/boss.gd            Boss 框架与 6 个 Boss 的行为
-  game/run_state.gd      远征/三模式/构筑/局外进度（对应 run.js）
-  ui/expedition_map.gd   远征路线图；choice_panel.gd 三选一/商店/事件共用
-  ui/build_panel.gd      TAB 构筑速览；codex_panel.gd 图鉴
+  js/run.js              四种模式、远征流程、局外进度、存档
+  js/render.js           Canvas 绘制与特效（预烘焙光晕、多边形拖尾、后处理）
+  js/ui.js               界面、音频、主循环、输入仲裁
+  manifest.webmanifest   PWA 清单（fullscreen / landscape）
+  sw.js                  Service Worker（网络优先，失败回落缓存）
+shells/desktop/          Electron 外壳：main.js + preload.js（contextBridge）
+src/                     Godot 版（0.3.0-stage03）
 data/content.json        由 web/js/content.js 生成，两版共用
-data/levels.json         旧关卡数据源（已废弃，仅作回退）
 tools/port_content.js    内容导出脚本
-dist/windows/            Windows 导出产物
+tools/balance_report.js  自动驾驶测量台：清关时长 / 失球 / 终局球速
+docs/balance-v0.5.md     平衡报告（48 关 + 6 Boss 的实测表）
 tests/                   Node 测试（网页）与 GDScript 测试（Godot）
 ```
 
@@ -106,10 +126,16 @@ tests/                   Node 测试（网页）与 GDScript 测试（Godot）
 ## 测试
 
 ```
-godot --headless --path . --script res://tests/test_sim.gd   # 500 项（模拟层）
-godot --headless --path . -- --selftest                      # 67 项（内容/Boss/构筑/存档）
-node tests/web_core_test.js                                   # 73 项
-node tests/web_full_test.js                                   # 515 项
+node tests/web_core_test.js      # 73 项（模拟核心）
+node tests/web_full_test.js      # 515 项（模式/构筑/存档/Boss）
+node tools/balance_report.js     # 平衡测量台（48 关 + 6 Boss）
+```
+
+Godot 版：
+
+```
+godot --headless --path . --script res://tests/test_sim.gd   # 500 项
+godot --headless --path . -- --selftest                      # 67 项
 ```
 
 ---
@@ -121,6 +147,25 @@ node tools\port_content.js          # 从 content.js 生成 data/content.json（
 python tools\gen_audio.py           # 重新生成音效（已生成）
 godot --headless --path . --export-release "Windows Desktop" dist/windows/BreakoutPhosphorEra.exe
 ```
+
+发布网页：把 `web/` 全量同步到 `gh-pages` 根目录（`index.html` / `js/` / `data/` / `assets/` / `manifest.webmanifest` / `sw.js`）。
+
+---
+
+## 平衡
+
+详见 [`docs/balance-v0.5.md`](docs/balance-v0.5.md)。核心结论：
+
+| 指标 | v0.4 | v0.5 |
+|---|---|---|
+| 关卡通过 | 43 / 48 | **48 / 48** |
+| 平均清关 | 117.5s | **67.9s** |
+| 清关中位 | 86.8s | 62.4s |
+| Boss 击杀 | 2 / 6 | **6 / 6** |
+| Boss 时长中位 | 360s（超时） | **110.3s** |
+
+测量台用「会瞄准、有 70ms 反应延迟、±12px 落点误差」的自动驾驶，
+跑的是零构筑裸属性，即最差情况。
 
 ---
 
@@ -136,8 +181,9 @@ godot --headless --path . --export-release "Windows Desktop" dist/windows/Breako
 - **两端行为仍有两处小分歧**（其余已对齐）：
   1. 「反弹蓄能」升级（k5）在网页版里只写了注释、没有实际累加伤害；Godot 版按描述实现（接球 +1 伤害，上限 +3）。
   2. 网页版「经典」模式是一条穿过 6 章的远征线；Godot 版把「经典远征」做成同一套，另外多给了一个「关卡选择」入口用于单关练习。
-- 自动驾驶测试只能跑到「清空 / 击碎 ≥50%」：迷宫里最后一两块需要人为瞄准，测试 AI 不会钻一列宽的竖井。
-- 未做真人试玩：Boss 时长、构筑强度、经济曲线没有玩家数据。
+- **平衡数据全部来自自动驾驶**（反应 70ms、误差 ±12px 是估计值），没有真人试玩数据。
+  构筑强度、金币经济、遗物搭配尚未量化。
+- 移动端做了触屏拖动、安全区、PWA 全屏与版面适配，并在 844×390 横屏模拟下验收，
+  **未做真机验收**（iOS Safari 的地址栏/手势区行为仍需实机确认）。
 - 无尽模式难度主要靠球速与血量，规则变体少。
-- 移动端只做了横屏提示与触屏拖动，未真机验收。
 - 详细档案：`C:\Users\ax2\Documents\技术博客\breakout-phosphor-era`
