@@ -8,11 +8,31 @@
 - 网页版：原生 HTML5，零依赖
 - 两版**共用同一份内容数据**：`web/js/content.js` 是唯一源，`tools/port_content.js` 生成 `data/content.json` 给 Godot 读
 
+**在线试玩（免安装）**：https://ax2.github.io/breakout-phosphor-era/
+**源码仓库**：https://github.com/ax2/breakout-phosphor-era
+
 ---
 
 ## 运行
 
-### 网页（推荐）
+### 方式一：直接在线玩（最省事）
+
+打开 https://ax2.github.io/breakout-phosphor-era/ ，桌面浏览器即可。
+
+### 方式二：Windows 可执行包
+
+从 [Releases](https://github.com/ax2/breakout-phosphor-era/releases) 下载
+`BREAKOUT-PhosphorEra-win64-v0.4.0.zip`，解压后双击 `BreakoutPhosphorEra.exe`。
+
+> **`BreakoutPhosphorEra.pck` 必须与 exe 放在同一目录**，只拷 exe 会启动失败。
+> 首次运行 Windows 可能弹 SmartScreen（未签名），选择「更多信息 → 仍要运行」。
+
+### 方式三：直接双击 index.html
+
+网页版是纯静态、脚本之间没有模块拆分、也不发 `fetch`，所以在 Chrome / Edge 下
+**直接双击 `web/index.html` 就能玩**（实测进入关卡正常、存档可读写）。
+
+如果某个浏览器因本地文件策略拦截，再用下面这条起服务器：
 
 ```bash
 cd web
@@ -20,18 +40,16 @@ python -m http.server 8765 --bind 127.0.0.1
 # 打开 http://127.0.0.1:8765/
 ```
 
-### Windows
+没有 Python 可以用 Node：
+
+```bash
+npx serve web -l 8765
+```
+
+### 方式四：Godot 编辑器（开发用）
 
 ```
-dist\windows\BreakoutPhosphorEra.exe
-```
-
-> **`BreakoutPhosphorEra.pck` 必须与 exe 在同一目录**，否则无法启动。
-
-### 开发（Godot 4.7.1）
-
-```
-godot --path .
+godot --path .        # 需要 Godot 4.7.1
 ```
 
 ---
