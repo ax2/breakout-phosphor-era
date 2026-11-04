@@ -213,7 +213,7 @@
         ? "拖动挡板　·　点击发球　·　横屏体验更佳"
         : "鼠标 / A D / ← → 　·　空格或左键发球　·　ESC 暂停"}</div>
       ${followCardHTML()}
-      <div class="corner-note l">BUILD 0.4.0 · FULL · WEB</div>
+      <div class="corner-note l">BUILD 0.5.0 · FULL · ${(BP_PLATFORM.kind || "web").toUpperCase()}</div>
       <div class="corner-note r">最高分 ${pad(m.bestScore || 0, 6)} · 击碎 ${m.totalBricks || 0} · 存档 ${State.status}</div>
     `);
     root.querySelector("#b-play").onclick = () => { Sfx.play("uiConfirm", -8); showModes(); };
