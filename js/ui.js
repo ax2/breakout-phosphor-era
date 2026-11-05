@@ -123,6 +123,7 @@
   let sim = null, battleCtx = null, scale = 1, acc = 0, last = 0;
   let settingsReturn = "menu", pendingPicks = [], lastSummary = null, inputMode = "mouse";
   let demoMode = false;
+  let battleStat = { t: 0, deaths: 0 };
 
   function resize() {
     // 移动端用 visualViewport：地址栏收起/展开时不会把舞台顶出屏幕
@@ -145,6 +146,7 @@
     view.settings.particles = st.particles;
     view.settings.shake = st.shake;
     view.settings.crt = st.crt;
+    view.settings.reduceMotion = !!st.reduce_motion;
     view.showDamage = !!st.damage_numbers;
     crtEl.style.opacity = st.crt === 0 ? "0" : st.crt === 1 ? "0.38" : "0.66";
     Sfx.setVolumes(st.sfx, st.music);
@@ -194,6 +196,103 @@
   function hideHud() { hud.classList.add("hidden"); }
   function pad(n, w) { return String(n).padStart(w, "0"); }
 
+  // ================================================================ 战绩记录
+  function battleBegin() {
+    battleStat = { t: performance.now(), deaths: 0 };
+  }
+  function battleEnd(win, summary) {
+    const m = State.meta;
+    const dur = Math.max(1, Math.round((performance.now() - battleStat.t) / 1000));
+    m.playTime = (m.playTime || 0) + dur;
+    m.deaths = (m.deaths || 0) + battleStat.deaths;
+    const r = Run.current;
+    let detail = "";
+    if (battleCtx.mode === "classic") {
+      const lv = summary && summary.level_id ? CT.LEVELS.find((l) => l.id === summary.level_id) : null;
+      detail = lv ? lv.name : (summary && summary.level_id ? summary.level_id.toUpperCase() : "");
+    }
+    else if (r) detail = r.mode === "endless" ? "第 " + (r.endlessFloor + 1) + " 层" : "第 " + (r.chapterPos + 1) + " 章";
+    m.history = m.history || [];
+    m.history.unshift({ t: Date.now(), mode: battleCtx.mode, win: !!win, score: (summary && summary.score) || 0, dur, detail });
+    if (m.history.length > 8) m.history.length = 8;
+    if (battleCtx.mode === "daily") touchDailyStreak();
+    State.persist();
+  }
+  function touchDailyStreak() {
+    const m = State.meta;
+    const key = Run.dailyInfo().key;
+    if (m.dailyLast === key) return;
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    const yKey = y.getFullYear() * 10000 + (y.getMonth() + 1) * 100 + y.getDate();
+    m.dailyStreak = m.dailyLast === yKey ? (m.dailyStreak || 0) + 1 : 1;
+    m.dailyLast = key;
+  }
+
+  function fmtPlayTime(sec) {
+    const s = Math.max(0, Math.round(sec || 0));
+    if (s < 60) return s + " 秒";
+    if (s < 3600) return Math.floor(s / 60) + " 分 " + (s % 60) + " 秒";
+    return Math.floor(s / 3600) + " 小时 " + Math.floor((s % 3600) / 60) + " 分";
+  }
+
+  // ================================================================ 档案
+  function showArchive() {
+    state = "archive";
+    const m = State.meta;
+    const clearedCount = Object.keys(m.cleared || {}).length;
+    const achCount = (m.achievements || []).length;
+    const achTotal = Meta.achievementList().length;
+    const cards = [
+      ["累计游玩", fmtPlayTime(m.playTime), (m.runs || 0) + " 次出发"],
+      ["击碎砖块", (m.totalBricks || 0), "BLOCKS"],
+      ["累计失球", (m.deaths || 0), "MISSES"],
+      ["通关进度", clearedCount + " / 48", "成就 " + achCount + " / " + achTotal],
+      ["经典最高分", pad(m.bestScore || 0, 6), "BEST SCORE"],
+      ["远征完成", (m.wins || 0), "RUNS CLEARED"],
+      ["无尽最高", (m.endlessBest || 0) + " 层", "FLOOR"],
+      ["每日连续", (m.dailyStreak || 0) + " 天", m.dailyLast ? "LAST " + m.dailyLast : "尚未打卡"],
+    ].map(([label, value, note]) =>
+      `<div class="arch-card"><span class="alabel">${label}</span><b>${value}</b><i class="anote">${note}</i></div>`).join("");
+
+    const chRows = CT.CHAPTERS.map((c, i) => {
+      const n = CT.LEVELS.filter((l) => l.chapter === c.id && m.cleared[l.id]).length;
+      return `<div class="ch-row"><span>${["一", "二", "三", "四", "五", "六"][i]}章</span>
+        <div class="ch-bar"><i style="width:${(n / 8) * 100}%"></i></div><b>${n} / 8</b></div>`;
+    }).join("");
+
+    const modeName = { classic: "经典", expedition: "远征", endless: "无尽", daily: "每日" };
+    const hist = (m.history || []).slice(0, 6).map((e) => {
+      const d = new Date(e.t);
+      const when = (d.getMonth() + 1) + "/" + d.getDate();
+      return `<div class="hist-row ${e.win ? "" : "lose"}">
+        <span class="hm">${modeName[e.mode] || e.mode}${e.win ? "" : " ✕"}</span>
+        <span class="hd">${e.detail ? e.detail + " · " : ""}${when} · ${e.dur}s</span>
+        <span class="hs">${e.score}</span></div>`;
+    }).join("") || `<div class="arch-empty">还没有战绩，去打一局</div>`;
+
+    const root = setScreen(`
+      <div class="page-head">
+        <div class="page-kicker">ARCHIVE · STATISTICS</div>
+        <h2 class="page-title">档案</h2>
+        <div class="page-sub">无伤章 ${m.noHitChapters || 0} 次 · 当前存档 ${State.status}</div>
+      </div>
+      <div class="page-line"></div>
+      <div class="arch-grid">${cards}</div>
+      <div class="arch-cols">
+        <div class="arch-panel">
+          <h3>章节进度</h3>
+          ${chRows}
+        </div>
+        <div class="arch-panel">
+          <h3>最近战绩</h3>
+          ${hist}
+        </div>
+      </div>
+      <button class="btn ghost arch-back" id="b-back">返回</button>
+    `);
+    root.querySelector("#b-back").onclick = () => { Sfx.play("uiMove", -8); showMenu(); };
+  }
+
   // ================================================================ 菜单
   function showMenu() {
     state = "menu"; sim = null; view.attach(null); hideHud();
@@ -210,16 +309,18 @@
         <button class="btn" id="b-codex">图鉴 / 成就</button>
         <button class="btn" id="b-set">设置</button>
       </div>
+      <button class="menu-link" id="b-arch">档案 / 统计</button>
       <div class="footer-note">${BP_PLATFORM.isTouch
         ? "拖动挡板　·　点击发球　·　横屏体验更佳"
         : "鼠标 / A D / ← → 　·　空格或左键发球　·　ESC 暂停"}</div>
       ${followCardHTML()}
-      <div class="corner-note l">BUILD 0.6.0 · FULL · ${(BP_PLATFORM.kind || "web").toUpperCase()}</div>
+      <div class="corner-note l">BUILD 0.7.0 · FULL · ${(BP_PLATFORM.kind || "web").toUpperCase()}</div>
       <div class="corner-note r">最高分 ${pad(m.bestScore || 0, 6)} · 击碎 ${m.totalBricks || 0} · 存档 ${State.status}</div>
     `);
     root.querySelector("#b-play").onclick = () => { Sfx.play("uiConfirm", -8); showModes(); };
     root.querySelector("#b-codex").onclick = () => { Sfx.play("uiMove", -8); showCodex(); };
     root.querySelector("#b-set").onclick = () => { Sfx.play("uiMove", -8); openSettings("menu"); };
+    root.querySelector("#b-arch").onclick = () => { Sfx.play("uiMove", -8); showArchive(); };
     root.querySelector("#b-play").focus();
   }
 
@@ -392,6 +493,7 @@
             <h2 class="route-title">第${["一", "二", "三", "四", "五", "六"][Run.chapterIdx()]}章 · ${ch.name}</h2>
             <div class="page-sub">${ch.brief}</div>
             ${r.mode === "daily" ? `<div class="page-sub" style="color:#ffc46b;margin-top:4px">今日规则 · ${Run.dailyInfo().rule.name}：${Run.dailyInfo().rule.desc}</div>` : ""}
+            ${r.mode === "endless" && Run.endlessRule().id !== "n0" ? `<div class="page-sub" style="color:#b39cff;margin-top:4px">本层规则 · ${Run.endlessRule().name}：${Run.endlessRule().desc}</div>` : ""}
           </div>
           <div class="route-meta">
             生命 ${r.hp} / ${r.maxHp}　碎片 ${r.gold}<br>
@@ -430,10 +532,12 @@
   function startBattle(def, opts) {
     if (!def) return;
     battleCtx = Object.assign({ mode: "classic", nodeType: "battle" }, opts || {});
+    battleCtx.flawless = true;
     const r = Run.current;
+    const erule = r && r.mode === "endless" ? Run.endlessRule() : null;
     sim = new BP.Sim();
     sim.setMods(r ? Run.mods() : BP.defaultStats());
-    sim.dropsEnabled = State.settings.drops !== false;
+    sim.dropsEnabled = State.settings.drops !== false && !(erule && erule.noDrops);
     const d = Object.assign({ legend: BP.LEGEND }, def);
     if (battleCtx.mode !== "classic") d.lives = 99;
     sim.setup(d, r ? (r.seed + r.row * 131 + r.chapterPos * 977) : (Date.now() & 0xffff));
@@ -447,7 +551,13 @@
     sim.on("invuln", () => {
       if (!sim._invulnToast || sim.time - sim._invulnToast > 3) { sim._invulnToast = sim.time; toast("护甲保护中：先破坏外围", 1400); }
     });
-    sim.on("lifeLost", () => { if (r) r.hp = Math.max(0, r.hp - 1); });
+    sim.on("lifeLost", () => {
+      battleStat.deaths++;
+      battleCtx.flawless = false;
+      if (r) { r.hp = Math.max(0, r.hp - 1); r.tookDamage = true; }
+    });
+    sim.on("failed", () => { battleStat.deaths++; battleCtx.flawless = false; });
+    battleBegin();
     screenEl.innerHTML = "";
     hud.classList.remove("hidden");
     document.getElementById("bossbar").classList.toggle("hidden", !def.boss);
@@ -457,17 +567,23 @@
     resetMouseAnchor();
     updateHudStatic(def);
     updateHud();
+    if (erule && erule.id !== "n0") toast("第 " + (r.endlessFloor + 1) + " 层规则 · " + erule.name + "：" + erule.desc, 2800);
     Sfx.resume(); Music.start();
   }
 
   function onBattleWin(summary) {
     lastSummary = summary;
     state = "result";
+    battleEnd(true, summary);
     if (battleCtx.mode === "classic") {
       State.meta.cleared[summary.level_id] = { score: summary.score, time: summary.time, combo: summary.max_combo };
       State.meta.best[summary.level_id] = Math.max(State.meta.best[summary.level_id] || 0, summary.score);
       State.meta.bestScore = Math.max(State.meta.bestScore || 0, summary.score);
       State.meta.bestCombo = Math.max(State.meta.bestCombo || 0, summary.max_combo);
+      if (battleCtx.flawless) {
+        State.meta.flawless[summary.level_id] = true;
+        toast("无伤通关 · 一条命都没掉", 2000);
+      }
       State.meta.codex.levels = State.meta.codex.levels || [];
       if (!State.meta.codex.levels.includes(summary.level_id)) State.meta.codex.levels.push(summary.level_id);
       Meta.sync();
@@ -484,9 +600,11 @@
     }
     pendingPicks = [];
     let res;
+    const flawlessChapter = !!(r && !r.tookDamage);
     if (battleCtx.nodeType === "boss") {
       res = Run.finishBoss(true, summary);
       pendingPicks.push({ kind: "relic" });
+      if (flawlessChapter) toast("无伤章 +1 · 累计 " + (State.meta.noHitChapters || 0) + " 次", 2400);
     } else {
       res = Run.finishNode(true, summary);
       if (battleCtx.nodeType === "elite") pendingPicks.push({ kind: "relic" });
@@ -500,6 +618,7 @@
   function onBattleLose(summary) {
     lastSummary = summary;
     state = "result";
+    battleEnd(false, summary);
     if (battleCtx.mode === "classic") setTimeout(() => showClassicResult(false), 900);
     else { if (Run.current) Run.current.hp = 0; setTimeout(() => showRunEnd(false), 900); }
     Sfx.play("gameOver", -3);
@@ -795,7 +914,7 @@
       <div class="page-head">
         <div class="page-kicker">ARCHIVE</div>
         <h2 class="page-title">图鉴 / 成就</h2>
-        <div class="page-sub">已收录 ${total} 条 · 成就 ${(m.achievements || []).length} / 8</div>
+        <div class="page-sub">已收录 ${total} 条 · 成就 ${(m.achievements || []).length} / ${Meta.achievementList().length}</div>
       </div>
       <div class="page-line"></div>
       <div class="tabs" style="position:absolute;left:72px;top:240px">${tabs}</div>
@@ -809,6 +928,7 @@
   // ================================================================ 设置
   function openSettings(from) {
     settingsReturn = from;
+    state = "settings";
     const st = State.settings;
     const spec = [
       ["扫描线 / CRT", ["关", "轻", "重"], () => st.crt, (i) => (st.crt = i)],
@@ -823,6 +943,7 @@
       ["音乐音量", [...Array(11)].map((_, i) => i * 10 + "%"), () => Math.round(st.music * 10), (i) => (st.music = i / 10)],
       ["音效音量", [...Array(11)].map((_, i) => i * 10 + "%"), () => Math.round(st.sfx * 10), (i) => (st.sfx = i / 10)],
       ["显示帧率", ["关", "开"], () => (st.show_fps ? 1 : 0), (i) => (st.show_fps = i === 1)],
+      ["减弱动效", ["关", "开"], () => (st.reduce_motion ? 1 : 0), (i) => (st.reduce_motion = i === 1)],
     ];
     const root = setScreen(`
       <div class="dim"></div>
@@ -859,7 +980,7 @@
     };
     root.querySelector("#b-back").onclick = () => {
       State.persist(); applySettings();
-      if (settingsReturn === "pause" && sim) showPause();
+      if (settingsReturn === "pause" && sim) showPause("", true);
       else showMenu();
     };
     root.querySelector("#b-back").focus();
@@ -867,8 +988,8 @@
   function nearest(arr, v) { return arr.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a)); }
 
   // ================================================================ 暂停
-  function showPause(reason) {
-    if (state !== "play") return;
+  function showPause(reason, force) {
+    if (state !== "play" && !force) return;
     state = "paused"; sim.paused = true;
     const autoNote = reason === "leave" ? "鼠标移出画面，已自动暂停 · 回到画面即继续"
       : reason === "blur" ? "窗口失去焦点，已自动暂停" : "";
@@ -933,7 +1054,9 @@
     const runbar = document.getElementById("runbar");
     if (r && battleCtx && battleCtx.mode !== "classic") {
       runbar.classList.remove("hidden");
-      document.getElementById("run-chapter").textContent = (r.mode === "endless" ? "无尽 " : "") + "第" + (r.chapterPos + 1) + "章";
+      document.getElementById("run-chapter").textContent = r.mode === "endless"
+        ? "无尽 " + (r.endlessFloor + 1) + " 层 · " + Run.endlessRule().name
+        : "第" + (r.chapterPos + 1) + "章";
       document.getElementById("run-gold").textContent = "碎片 " + r.gold;
       document.getElementById("run-level").textContent = "等级 " + (r.level + 1);
       document.getElementById("run-build").textContent = "升级 " + r.upgrades.length + " · 遗物 " + r.relics.length;
@@ -1137,6 +1260,7 @@
       startBattle({ id: "boss_" + b.id, name: b.name, codename: b.code, rows: [], speed: 520, lives: 99, boss: b, chapter: b.chapter }, { mode: "expedition", nodeType: "boss" });
     },
     emit(n, a) { if (sim && sim.hooks[n]) sim.hooks[n](a); },
+    get sim() { return sim; },
     showRoute, showShop, showEvent, showCodex, showBuild, openSettings, showModes, showMenu, showPause,
     setDemo(v) { demoMode = !!v; },
     chooseNode(i) { enterNode(Run.currentOptions()[i || 0]); },

@@ -326,6 +326,7 @@
       shieldCharges: 0, shieldMax: 0,
       goldBonus: 0, xpBonus: 0, comboBonus: 1,
       bounceDamage: 0, lastStand: false,
+      ember: 0, coldSnap: 0, storm: 0, recall: 0,
       lifesteal: 0, dropRate: 1,
     };
   }
@@ -361,7 +362,8 @@
     this.hooks = {};
     this.boss = null;
     this.shield = 0;
-    this.laserT = 0; this.droneT = 0;
+    this.laserT = 0; this.droneT = 0; this.stormT = 0;
+    this._emberDepth = 0;
     this.hitStop = 0;
     this.bonusBricks = 0;
     this.drops = [];
@@ -543,6 +545,19 @@
           const t = list[this.rng.int(0, list.length - 1)];
           this._damageBrick(t, 1, { x: t.cx(), y: t.cy() - 40 }, "drone");
           this.emit("drone", t.cx(), t.cy());
+        }
+      }
+    }
+    // 雷暴：定时对随机一块砖放电（不参与连锁，不吃暴击）
+    if (this.mods.storm > 0 && this.phase === PHASE.PLAY && this.grid) {
+      this.stormT -= dt;
+      if (this.stormT <= 0) {
+        this.stormT = this.mods.storm;
+        const list = this.grid.aliveBricks().filter((b) => !b.solid() && !b.invuln);
+        if (list.length) {
+          const t = list[this.rng.int(0, list.length - 1)];
+          this.emit("storm", t.cx(), t.cy());
+          this._damageBrick(t, 1, { x: t.cx(), y: t.cy() }, "storm");
         }
       }
     }
@@ -788,7 +803,8 @@
     // 精准接球：中心 18% 区域触发
     if (this.mods.centerCrit && Math.abs(off) < 0.18) b.critNext = true;
     if (this.mods.bounceDamage > 0) {
-      b.dmgBonus = Math.min(3, b.dmgBonus + 0); // 由伤害计算读取
+      // 反弹蓄能：每次接球给「这一颗球」叠一层伤害，上限 +3
+      b.dmgBonus = Math.min(3, b.dmgBonus + this.mods.bounceDamage);
     }
     // 磁吸：接球后轻微回正
     const magnet = this.mods.magnet + (this.buffs.magnet > 0 ? 1 : 0);
@@ -913,6 +929,20 @@
       for (const n of this._neighbors(brick)) {
         if (!n.solid() && !n.invuln) { n.burn = Math.min(4, n.burn + this.mods.burnSpread); n.burnDps = Math.max(n.burnDps, this.mods.burnDps || 0); }
       }
+    }
+    // 余烬：带灼烧的砖块碎掉时再炸一次（限深度，避免整面墙连锁递归）
+    if (this.mods.ember && brick.burn > 0 && this._emberDepth < 2) {
+      this._emberDepth++;
+      this.emit("ember", atx, aty);
+      this._explode(atx, aty, 1, 1);
+      this._emberDepth--;
+    }
+    // 寒流：冻结的砖块碎掉时把冰传给周围一格
+    if (this.mods.coldSnap && brick.frozen > 0) {
+      for (const n of this._neighbors(brick)) {
+        if (!n.solid() && !n.invuln) n.frozen = Math.max(n.frozen, 2.2);
+      }
+      this.emit("coldSnap", atx, aty);
     }
 
     this._maybeDrop(brick, atx, aty);
@@ -1052,6 +1082,16 @@
   };
 
   Sim.prototype._allLost = function () {
+    // 召回协议：这次本该死，但有概率把球拉回来，直接进入重新发球
+    if (this.mods.recall > 0 && this.rng.next() < this.mods.recall) {
+      this.balls = [];
+      this.combo = 0;
+      this.speed = Math.min(this.mods.startSpeed, this.mods.maxSpeed);
+      this._spawnServe();
+      this.phase = PHASE.SERVE;
+      this.emit("recall", this.paddleX);
+      return;
+    }
     this.balls = [];
     this.combo = 0;
     this.lives--;
