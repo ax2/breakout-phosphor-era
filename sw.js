@@ -1,7 +1,7 @@
 /* BREAKOUT: 磷光纪元 — 离线缓存
  * 版本号一变就重建缓存；只缓存静态资源，不碰存档。
  */
-const CACHE = "phosphor-era-v3";
+const CACHE = "phosphor-era-v4";
 const ASSETS = [
   "./",
   "index.html",
