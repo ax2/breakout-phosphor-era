@@ -144,6 +144,7 @@
     const st = State.settings;
     view.settings.particles = st.particles;
     view.settings.shake = st.shake;
+    view.settings.crt = st.crt;
     view.showDamage = !!st.damage_numbers;
     crtEl.style.opacity = st.crt === 0 ? "0" : st.crt === 1 ? "0.38" : "0.66";
     Sfx.setVolumes(st.sfx, st.music);
@@ -213,7 +214,7 @@
         ? "拖动挡板　·　点击发球　·　横屏体验更佳"
         : "鼠标 / A D / ← → 　·　空格或左键发球　·　ESC 暂停"}</div>
       ${followCardHTML()}
-      <div class="corner-note l">BUILD 0.5.0 · FULL · ${(BP_PLATFORM.kind || "web").toUpperCase()}</div>
+      <div class="corner-note l">BUILD 0.6.0 · FULL · ${(BP_PLATFORM.kind || "web").toUpperCase()}</div>
       <div class="corner-note r">最高分 ${pad(m.bestScore || 0, 6)} · 击碎 ${m.totalBricks || 0} · 存档 ${State.status}</div>
     `);
     root.querySelector("#b-play").onclick = () => { Sfx.play("uiConfirm", -8); showModes(); };
@@ -1126,7 +1127,7 @@
   requestAnimationFrame((t) => { last = t; requestAnimationFrame(frame); });
 
   window.BPGame = {
-    get state() { return state; }, get sim() { return sim; },
+    get state() { return state; }, get sim() { return sim; }, get view() { return view; },
     Run, State, Meta, CT,
     startMode(m) { if (m === "classic") showClassicSelect(0); else showPaddleSelect(m); },
     startLevel(id) { const lv = CT.LEVELS.find((l) => l.id === id); if (lv) startBattle(lv, { mode: "classic" }); },

@@ -22,3 +22,5 @@ node_modules/
 
 # ---------------------------------------------------------------- 本地截图临时件
 docs/shots-web/_*.png
+
+shells/desktop/dist-v6/

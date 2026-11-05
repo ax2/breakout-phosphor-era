@@ -8,10 +8,10 @@
 | 端 | 形态 | 说明 |
 |---|---|---|
 | Web | `web/index.html` | 零依赖原生 HTML5，双击即玩 |
-| Windows / macOS / Linux | `shells/desktop/`（Electron 45） | 直接 `loadFile` 同一份 `web/`，存档落 `userData/save.json` |
+| Windows / macOS / Linux | `shells/desktop/`（Electron 42） | 直接 `loadFile` 同一份 `web/`，存档落 `userData/save.json` |
 | 移动端 | PWA（`manifest.webmanifest` + `sw.js`） | 全屏横屏、安全区适配、触屏拖动、离线可玩 |
 
-- 网页版：`0.5.0-full`（6 章 48 关 / 6 Boss / 4 模式）
+- 网页版：`0.6.0-full`（6 章 48 关 / 6 Boss / 4 模式）
 - Godot 版：`0.3.0-stage03`（内容已与网页版对齐，代码仍在仓库里作为第二实现）
 - 两版**共用同一份内容数据**：`web/js/content.js` 是唯一源，`tools/port_content.js` 生成 `data/content.json` 给 Godot 读
 
@@ -30,7 +30,7 @@
 ### 方式二：Windows 桌面端
 
 直接从 [Releases](https://github.com/ax2/breakout-phosphor-era/releases) 下载
-`BREAKOUT-PhosphorEra-win64-v0.5.0.zip`，解压后双击 `BREAKOUT Phosphor Era.exe`。
+`BREAKOUT-PhosphorEra-win64-v0.6.0.zip`，解压后双击 `BREAKOUT Phosphor Era.exe`。
 未签名，首次运行可能弹 SmartScreen，选「更多信息 → 仍要运行」。
 
 自己构建：
@@ -107,6 +107,32 @@ godot --path .        # 需要 Godot 4.7.1
 - **8 种掉落物**：多重球、加宽、激光、护盾、磁吸、减速、金砖、加命
 - **2 种新砖型**：金砖（G，高分高掉落率）、游走砖（M，横向漂移）
 - 8 个成就、五分类图鉴、存档 v3（含迁移）
+
+---
+
+## 视觉与手感
+
+全部程序绘制，零图片素材。v0.6 在此基础上补了一层"打击感"和一层"屏体质感"：
+
+**打击感**
+
+- **缩放冲击**：命中瞬间画面以中心为支点放大 1.4% 再弹回，配合四周压暗，比单纯抖动更"顶"
+- **残影解体**：砖块碎掉的瞬间留下同形状的椭圆光团 + 细轮廓，0.15 秒内散开，而不是直接消失
+- **球体挤压**：撞击时沿法线压扁 28%，90ms 回弹；高速时球外有两条旋转能量环和速度拉丝
+- **连击里程碑**：每 5 连触发一次全屏冲击环，连击越高背景能量雾越亮、扫描越快
+- **墙面记忆**：每次撞墙在墙上留一个会消退的光斑
+
+**屏体质感**（设置里可关）
+
+- 预烘焙噪点瓦片、整屏荧光呼吸、边缘色散、Boss 濒死时四周收紧的红色脉冲
+- 所有后处理都画在抖动/缩放变换**之外**，否则噪点和暗角会跟着晃，立刻穿帮
+
+**其他细节**
+
+- 每块砖有一条相位错开的掠过光，整片砖墙看起来在"运行"
+- 挡板有移动残影和地面能量投影
+- 掉落物带彗尾，磁吸时能看到牵引虚线
+- Boss 供能节点到核心之间画能量链路（带流动光点），核心外有旋转虚线环
 
 ---
 

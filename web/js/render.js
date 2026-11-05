@@ -43,6 +43,18 @@
     ctx.closePath();
   }
 
+  /** 命中点最近的球：用来给"被击中的那颗球"做挤压反馈 */
+  function nearestBall(sim, x, y) {
+    if (!sim || !sim.balls) return null;
+    let best = null, bd = 1e9;
+    for (const b of sim.balls) {
+      if (!b.active) continue;
+      const d = (b.x - x) * (b.x - x) + (b.y - y) * (b.y - y);
+      if (d < bd) { bd = d; best = b; }
+    }
+    return best;
+  }
+
   // ---------------------------------------------------------------- 预渲染光晕
   // 每帧 shadowBlur 太贵；预先烘焙成贴图，用 lighter 混合叠上去。
   const glowCache = new Map();
@@ -69,17 +81,46 @@
     ctx.globalAlpha = 1;
   }
 
+  // 竖直光条贴图（顶部透明→底部实色）。每帧画十几条渐变线的话，光构造渐变就吃掉 2ms
+  const streakCache = new Map();
+  function streakSprite(color) {
+    const key = color;
+    let cv = streakCache.get(key);
+    if (cv) return cv;
+    cv = document.createElement("canvas");
+    cv.width = 4; cv.height = 96;
+    const g = cv.getContext("2d");
+    const gr = g.createLinearGradient(0, 0, 0, 96);
+    gr.addColorStop(0, rgba(color, 0));
+    gr.addColorStop(0.55, rgba(color, 0.5));
+    gr.addColorStop(1, rgba(color, 1));
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 4, 96);
+    streakCache.set(key, cv);
+    return cv;
+  }
+
   // ---------------------------------------------------------------- FX
   function Fx() {
     this.parts = [];
     this.rings = [];
     this.texts = [];
     this.waves = [];
+    this.ghosts = [];
     this.density = 1;
     this.rng = new BP.XRand(0x5eed);
   }
   Fx.prototype.clear = function () {
-    this.parts.length = 0; this.rings.length = 0; this.texts.length = 0; this.waves.length = 0;
+    this.parts.length = 0; this.rings.length = 0; this.texts.length = 0;
+    this.waves.length = 0; this.ghosts.length = 0;
+  };
+  /** 砖块被击碎时的本体残影：先撑大再塌缩，让"被打碎"有形态而不是瞬间消失 */
+  Fx.prototype.ghost = function (rect, color, dur, dir) {
+    if (this.ghosts.length > 36) this.ghosts.shift();
+    this.ghosts.push({
+      x: rect.x, y: rect.y, w: rect.w, h: rect.h, color,
+      life: dur, ttl: dur, dx: dir ? dir.x : 0, dy: dir ? dir.y : 0,
+    });
   };
   /** kind: 0 火花 / 1 碎片 / 2 余烬 */
   Fx.prototype.burst = function (x, y, nx, ny, color, amount, power, size, kind) {
@@ -148,8 +189,37 @@
       if (this.texts[i].life <= 0) this.texts.splice(i, 1);
       else { this.texts[i].y -= 52 * dt; }
     }
+    for (let i = this.ghosts.length - 1; i >= 0; i--) {
+      this.ghosts[i].life -= dt;
+      if (this.ghosts[i].life <= 0) this.ghosts.splice(i, 1);
+    }
   };
   Fx.prototype.draw = function (ctx) {
+    // 残影：柔光体 + 极细轮廓。实色填充会变成一块硬边色板，必须有软过渡才像"能量散去"
+    for (const g of this.ghosts) {
+      const a = Math.max(0, g.life / g.ttl);
+      const t = 1 - a;
+      const env = a * a;
+      const k = 1 + 0.30 * Math.sin(t * Math.PI * 0.8);
+      const w = g.w * k, h = g.h * k;
+      const cx = g.x + g.w / 2 + g.dx * t * 8;
+      const cy = g.y + g.h / 2 + g.dy * t * 8;
+      ctx.globalCompositeOperation = "lighter";
+      // 椭圆光团：拉成砖块的宽高比，才像"这块砖化成了光"，而不是贴了个圆光斑
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1, Math.max(0.38, h / w));
+      blitGlow(ctx, g.color, 0, 0, w * 0.78, env * 0.85);
+      ctx.restore();
+      ctx.globalAlpha = env * 0.55;
+      ctx.strokeStyle = g.color;
+      ctx.lineWidth = 1.2;
+      roundRect(ctx, cx - w / 2, cy - h / 2, w, h, 3);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    }
+    ctx.globalAlpha = 1;
     // 冲击波
     ctx.globalCompositeOperation = "lighter";
     for (const w of this.waves) {
@@ -230,13 +300,24 @@
     this.hitFlash = 0;
     this.paddleFlash = 0;
     this.paddleXPrev = null;
+    this.paddleTrail = [];
     this.showDamage = true;
     this.beams = [];
     this.bolts = [];
     this.motes = [];
+    this.wallMarks = [];
     this.settings = { particles: 1, shake: 0.7, crt: 1 };
     this.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
     this._bgCache = null;
+    // 打击感：缩放冲击 / 色散强度 / 屏体闪烁
+    this.zoom = 0;
+    this.chroma = 0;
+    this.flicker = 0;
+    this.ballFx = new Map();     // ball -> { t, nx, ny } 命中瞬间的挤压
+    this.dropTrail = new Map();  // drop -> [x, y, ...]
+    this._noisePat = null;
+    this._noiseOff = 0;
+    this._edgeCache = null;
     this._rng = new BP.XRand(0xbeef);
     for (let i = 0; i < 46; i++) {
       this.motes.push({
@@ -267,6 +348,46 @@
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.dpr = dpr;
     this._bgCache = null;
+    this._buildPost();
+  };
+
+  /** 预烘焙后处理贴图：噪点瓦片（每帧只做一次 pattern 填充，不逐像素算） */
+  View.prototype._buildPost = function () {
+    const N = 96;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = N;
+    const g = cv.getContext("2d");
+    const img = g.createImageData(N, N);
+    const rng = new BP.XRand(0xc0ffee);
+    for (let i = 0; i < N * N; i++) {
+      const v = rng.next();
+      const o = i * 4;
+      if (v > 0.5) {
+        img.data[o] = 255; img.data[o + 1] = 255; img.data[o + 2] = 255;
+        img.data[o + 3] = Math.round((v - 0.5) * 2 * 150);
+      } else {
+        img.data[o] = 0; img.data[o + 1] = 0; img.data[o + 2] = 0;
+        img.data[o + 3] = Math.round((0.5 - v) * 2 * 150);
+      }
+    }
+    g.putImageData(img, 0, 0);
+    this._noisePat = this.ctx.createPattern(cv, "repeat");
+
+    // 冲击瞬间压暗四周：中心显得更"爆"。渐变对象复用，靠 globalAlpha 控强度
+    const vg = this.ctx.createRadialGradient(C.W / 2, C.H / 2, C.H * 0.30, C.W / 2, C.H / 2, C.H * 0.96);
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, "rgba(0,0,0,1)");
+    this._punchVig = vg;
+
+    // 边缘色散：几何固定，只让强度变化，所以渐变可以只造一次
+    const dl = this.ctx.createLinearGradient(0, 0, 150, 0);
+    dl.addColorStop(0, "rgba(255,64,92,1)");
+    dl.addColorStop(1, "rgba(255,64,92,0)");
+    this._dispL = dl;
+    const dr = this.ctx.createLinearGradient(C.W, 0, C.W - 150, 0);
+    dr.addColorStop(0, "rgba(74,196,255,1)");
+    dr.addColorStop(1, "rgba(74,196,255,0)");
+    this._dispR = dr;
   };
 
   View.prototype.attach = function (sim) {
@@ -275,7 +396,8 @@
     this.flash.clear();
     this.shake = 0; this.comboPop = 0; this.lastCombo = 0; this.levelFlash = 0;
     this.hitFlash = 0; this.paddleFlash = 0; this.paddleXPrev = null;
-    this.beams.length = 0; this.bolts.length = 0;
+    this._comboMark = 0; this.zoom = 0; this.chroma = 0;
+    this.beams.length = 0; this.bolts.length = 0; this.wallMarks.length = 0;
     if (!sim) return;
     const f = this.fx;
     const self = this;
@@ -300,15 +422,23 @@
         }
         if (brick.hp > 0) Sfx.play("tough", -5, 1.05);
       }
+      // 球在撞击瞬间沿法线压扁，回弹 90ms
+      const ball = nearestBall(sim, x, y);
+      if (ball) this.ballFx.set(ball, { t: 0.09, nx, ny });
+      this.impact(crit ? 0.38 : brick.solid() ? 0.16 : 0.11);
     });
 
     sim.on("brickDestroyed", (brick, cause, x, y, crit) => {
       this.flash.delete(brick);
       const col = typeColor(brick.type);
+      const gx = x - brick.cx(), gy = y - brick.cy();
+      const gl = Math.hypot(gx, gy) || 1;
+      f.ghost(brick.rect, col, crit ? 0.22 : 0.15, { x: gx / gl, y: gy / gl });
       f.debris(x, y, brick.rect, col, crit ? 14 : 9);
       f.ring(x, y, col, 4, 38, 0.34, 1.5);
       f.wave(x, y, rgba(col, 0.9), 54, 0.42);
       this.addShake(cause === "ball" ? 0.15 : 0.06);
+      this.impact(crit ? 0.55 : 0.28);
       if (this.showDamage && cause === "ball") f.text(x, y - 14, "+" + brick.score(), col, 0.62, 14);
       if (brick.type === "gold") {
         f.burst(x, y, 0, -1, PAL.amber, 10, 200, 2, 2);
@@ -323,6 +453,7 @@
       f.ring(x, y, PAL.amber, 4, 70, 0.36, 1.5);
       f.burst(x, y, 0, -1, PAL.rose, 28, 400, 2.8);
       this.addShake(0.5);
+      this.impact(0.9);
       this.hitFlash = Math.min(1, this.hitFlash + 0.22);
       Sfx.play("explode", -2, 1);
       if (destroyed > 1) f.text(x, y - 26, "连锁 ×" + destroyed, PAL.amber, 0.9, 17);
@@ -333,11 +464,17 @@
       this.paddleFlash = 1;
       f.burst(px, C.PADDLE_TOP, 0, -1, sim.buffs.laser > 0 ? PAL.amber : PAL.accent, 6, 160, 1.5);
       f.ring(px, C.PADDLE_TOP, PAL.accent, 2, 22, 0.24, 1.4);
+      // 挡板反弹也要有分量，但比碎砖轻；球的挤压方向取反射法线
+      const b = nearestBall(sim, px, C.PADDLE_TOP);
+      if (b) this.ballFx.set(b, { t: 0.075, nx: 0, ny: -1 });
+      this.impact(0.09 + Math.abs(off) * 0.05);
       Sfx.play("paddle", -4, 1 + off * 0.06);
     });
 
     sim.on("wallBounce", (x, y, nx, ny) => {
       f.burst(x, y, nx, ny, PAL.accent, 3, 110, 1.2);
+      if (this.wallMarks.length > 36) this.wallMarks.shift();
+      this.wallMarks.push({ x, y, nx, ny, life: 1.1, ttl: 1.1 });
       Sfx.play("wall", -12, 1);
     });
 
@@ -346,6 +483,7 @@
       f.ring(x, y, PAL.rose, 6, 78, 0.55, 2.4);
       f.burst(x, y, 0, -1, PAL.rose, 16, 260, 2.1);
       this.addShake(0.35);
+      this.impact(0.7);
       this.hitFlash = 0.5;
       Sfx.play("lifeLost", -3, 1);
       if (root.BP_PLATFORM) root.BP_PLATFORM.vibrate(30);
@@ -357,7 +495,19 @@
       Sfx.play("serve", -4, 1);
     });
 
-    sim.on("cleared", () => { this.levelFlash = 1; this.addShake(0.4); Sfx.play("clear", -2, 1); });
+    sim.on("cleared", () => {
+      this.levelFlash = 1;
+      this.addShake(0.4);
+      this.impact(0.85);
+      // 清屏涟漪：三层错峰扩散，比单层白闪更像"结算"
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          if (!this.sim) return;
+          this.fx.ring(C.W / 2, 380, PAL.accent, 16, 560 + i * 110, 0.95, 3 - i * 0.7);
+        }, i * 105);
+      }
+      Sfx.play("clear", -2, 1);
+    });
     sim.on("assist", (msg) => { f.text(640, 470, msg, PAL.amber, 1.4, 16); Sfx.play("correct", -14, 1); });
 
     sim.on("laser", (x, tx, ty) => {
@@ -380,7 +530,7 @@
     sim.on("ballSpawned", (x, y) => { f.ring(x, y, PAL.accent, 4, 32, 0.4, 2); f.wave(x, y, PAL.accent, 40, 0.4); });
     sim.on("invuln", (x, y) => f.ring(x, y, "#c9a227", 6, 24, 0.22, 1.2));
     sim.on("regen", (x, y) => f.ring(x, y, "#8ee6c8", 2, 20, 0.3, 1.2));
-    sim.on("bossPhase", () => { this.addShake(0.6); this.hitFlash = 0.7; });
+    sim.on("bossPhase", () => { this.addShake(0.6); this.impact(1); this.hitFlash = 0.7; });
 
     // 掉落物：出现 / 接住 / 漏掉
     sim.on("dropSpawned", (type, x, y) => {
@@ -393,6 +543,7 @@
       f.burst(x, C.PADDLE_TOP, 0, -1, d.color, 12, 240, 1.8);
       f.text(sim.paddleX, C.PADDLE_TOP - 34, label || "", d.color, 0.9, 16);
       this.paddleFlash = 1;
+      this.impact(0.2);
       Sfx.play("pickup", -5, 1.1);
       if (root.BP_PLATFORM) root.BP_PLATFORM.vibrate(12);
     });
@@ -408,6 +559,12 @@
     this.shake = Math.min(1, this.shake + v);
   };
 
+  /** 统一打击反馈入口：缩放冲击 + 色散闪光，比单纯抖动更"实" */
+  View.prototype.impact = function (power) {
+    this.zoom = Math.min(1, this.zoom + power * 0.42);
+    this.chroma = Math.min(1, this.chroma + power * 0.62);
+  };
+
   View.prototype.update = function (dt) {
     this.t += dt;
     this.fx.density = Math.max(0, Math.min(1, this.settings.particles));
@@ -419,6 +576,49 @@
     this.levelFlash = Math.max(0, this.levelFlash - dt * 1.6);
     this.hitFlash = Math.max(0, this.hitFlash - dt * 3.4);
     this.paddleFlash = Math.max(0, this.paddleFlash - dt * 4.5);
+    this.zoom = Math.max(0, this.zoom - dt * 4.4);
+    this.chroma = Math.max(0, this.chroma - dt * 2.4);
+    this._noiseOff = (this._noiseOff + dt * 23) % 96;
+    // 连击里程碑：每 5 连给一次全屏反馈，比单纯数字变大更有"打顺了"的感觉
+    if (this.sim) {
+      const c = this.sim.combo;
+      if (c < (this._comboMark || 0)) this._comboMark = 0;
+      if (c >= 5 && c % 5 === 0 && c !== this._comboMark) {
+        this._comboMark = c;
+        this.impact(0.45);
+        this.fx.ring(C.W / 2, 330, PAL.amber, 30, 420, 0.55, 2.2);
+        this.fx.text(C.W / 2, 300, "连锁 ×" + c, PAL.amber, 1.0, 26);
+      }
+    }
+    for (const [k, v] of this.ballFx) {
+      v.t -= dt;
+      if (v.t <= 0) this.ballFx.delete(k);
+    }
+    // 挡板拖影采样：只在真正移动时有，静止时不画
+    const px0 = this.sim ? this.sim.paddleX : null;
+    if (px0 != null) {
+      this.paddleTrail.push({ x: px0, life: 0.11 });
+      if (this.paddleTrail.length > 32) this.paddleTrail.shift();
+    }
+    for (let i = this.paddleTrail.length - 1; i >= 0; i--) {
+      this.paddleTrail[i].life -= dt;
+      if (this.paddleTrail[i].life <= 0) this.paddleTrail.splice(i, 1);
+    }
+    // 掉落物拖尾采样（120Hz 下 24 个点约 0.1s，够拉出短彗尾）
+    const ds = this.sim && this.sim.drops;
+    if (ds && ds.length) {
+      for (const d of ds) {
+        let tr = this.dropTrail.get(d);
+        if (!tr) { tr = []; this.dropTrail.set(d, tr); }
+        tr.push(d.x, d.y + Math.sin(d.ph) * 2);
+        if (tr.length > 24) tr.splice(0, tr.length - 24);
+      }
+      if (this.dropTrail.size > ds.length * 2 + 4) {
+        for (const k of this.dropTrail.keys()) if (!ds.includes(k)) this.dropTrail.delete(k);
+      }
+    } else if (this.dropTrail.size) {
+      this.dropTrail.clear();
+    }
     for (const [k, v] of this.flash) {
       if (v - dt <= 0) this.flash.delete(k); else this.flash.set(k, v - dt);
     }
@@ -429,6 +629,7 @@
     this.comboPop = Math.max(0, this.comboPop - dt * 3.2);
     for (let i = this.beams.length - 1; i >= 0; i--) { this.beams[i].t -= dt; if (this.beams[i].t <= 0) this.beams.splice(i, 1); }
     for (let i = this.bolts.length - 1; i >= 0; i--) { this.bolts[i].t -= dt; if (this.bolts[i].t <= 0) this.bolts.splice(i, 1); }
+    for (let i = this.wallMarks.length - 1; i >= 0; i--) { this.wallMarks[i].life -= dt; if (this.wallMarks[i].life <= 0) this.wallMarks.splice(i, 1); }
     // 环境浮尘
     for (const m of this.motes) {
       m.y -= m.v * dt;
@@ -441,10 +642,18 @@
     const ctx = this.ctx, s = this.sim;
     ctx.save();
     ctx.translate(this.shakeX, this.shakeY);
+    // 缩放冲击：以画面中心为支点。幅度只有 1.4%，但比抖动更能"顶"出手感
+    if (this.zoom > 0.001) {
+      const z = 1 + this.zoom * 0.014;
+      ctx.translate(C.W / 2, C.H / 2);
+      ctx.scale(z, z);
+      ctx.translate(-C.W / 2, -C.H / 2);
+    }
 
-    this._bg(ctx);
+    this._bg(ctx, s);
     this._walls(ctx);
     if (s) {
+      this._bossLinks(ctx, s);
       this._bricks(ctx, s);
       this._drops(ctx, s);
       this._beams(ctx);
@@ -457,9 +666,11 @@
       this._post(ctx, s);
     }
     ctx.restore();
+    // 屏体层：不跟随抖动/缩放，否则噪点和暗角会跟着一起晃，穿帮
+    if (s) this._screen(ctx, s);
   };
 
-  View.prototype._bg = function (ctx) {
+  View.prototype._bg = function (ctx, s) {
     if (!this._bgCache) {
       const cv = document.createElement("canvas");
       cv.width = C.W; cv.height = C.H;
@@ -496,8 +707,8 @@
     ctx.drawImage(this._bgCache, 0, 0);
 
     // 网格随连击变亮：给"打得顺"一个体感反馈
-    const s = this.sim;
     const heat = s ? Math.min(1, s.combo / 12) : 0;
+    const hot = !!(s && s.combo >= 8);
     if (heat > 0.02) {
       ctx.strokeStyle = `rgba(124,255,178,${0.02 + heat * 0.075})`;
       ctx.lineWidth = 1;
@@ -505,6 +716,17 @@
       for (let x = C.WALL_L; x <= C.WALL_R; x += 96) { ctx.moveTo(x, C.CEIL); ctx.lineTo(x, C.DEATH); }
       for (let y = C.CEIL; y <= C.DEATH; y += 96) { ctx.moveTo(C.WALL_L, y); ctx.lineTo(C.WALL_R, y); }
       ctx.stroke();
+    }
+    // 高连击时砖块区域泛起一层能量雾，背景不再是死的
+    if (heat > 0.05) {
+      const rg = ctx.createRadialGradient(C.W / 2, 230, 30, C.W / 2, 230, 520);
+      rg.addColorStop(0, rgba(hot ? PAL.rose : PAL.accent, 0.10 * heat));
+      rg.addColorStop(0.55, rgba(hot ? PAL.rose : PAL.accent, 0.035 * heat));
+      rg.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = rg;
+      ctx.fillRect(C.WALL_L, C.CEIL, C.ARENA_W, 600);
+      ctx.globalCompositeOperation = "source-over";
     }
 
     // 浮尘
@@ -515,13 +737,49 @@
     }
     ctx.globalAlpha = 1;
 
-    // 扫描光带
-    const sy = (this.t * 26) % (C.H + 200) - 100;
-    const grad = ctx.createLinearGradient(0, sy - 40, 0, sy + 6);
+    // 数据流：沿竖网格线滑落的光包，纯 t 函数驱动，不占更新循环
+    if (!this._flow) {
+      const r = new BP.XRand(0x1f10);
+      this._flow = [];
+      for (let i = 0; i < 12; i++) {
+        this._flow.push({
+          x: 96 + Math.floor(r.range(0, 12)) * 96,
+          y0: r.range(0, 1),
+          v: r.range(26, 74),
+          len: r.range(22, 62),
+          c: r.next() < 0.28 ? PAL.cyan : PAL.accent,
+          a: r.range(0.07, 0.19),
+        });
+      }
+    }
+    // 只走上半场：挡板附近保持干净，否则像在下雨
+    const span = C.DEATH - C.CEIL - 170;
+    const speedK = 1 + heat * 1.4;
+    ctx.globalCompositeOperation = "lighter";
+    for (const f of this._flow) {
+      const prog = (f.y0 + (this.t * f.v * speedK) / span) % 1;
+      const y = C.CEIL + prog * span;
+      const env = Math.sin(prog * Math.PI);   // 两端淡入淡出，避免突然出现
+      if (env < 0.06) continue;
+      const spr = streakSprite(f.c);
+      ctx.globalAlpha = f.a * env;
+      ctx.drawImage(spr, f.x - 2, y - f.len, 4, f.len);
+      ctx.globalAlpha = f.a * env * 1.6;
+      ctx.fillStyle = f.c;
+      ctx.fillRect(f.x - 1, y - 1, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+
+    // 扫描光带：窄、两端渐变、无硬边。太宽会变成一条横贯画面的色带
+    const sy = ((this.t * 26 * speedK) % (C.H + 220)) - 90;
+    const grad = ctx.createLinearGradient(0, sy - 56, 0, sy + 14);
     grad.addColorStop(0, "rgba(124,255,178,0)");
-    grad.addColorStop(1, "rgba(124,255,178,0.05)");
+    grad.addColorStop(0.70, "rgba(124,255,178,0.009)");
+    grad.addColorStop(0.92, "rgba(124,255,178,0.022)");
+    grad.addColorStop(1, "rgba(124,255,178,0)");
     ctx.fillStyle = grad;
-    ctx.fillRect(C.WALL_L, sy - 40, C.ARENA_W, 46);
+    ctx.fillRect(C.WALL_L, sy - 56, C.ARENA_W, 70);
   };
 
   View.prototype._walls = function (ctx) {
@@ -568,6 +826,58 @@
       ctx.moveTo(x, y); ctx.lineTo(x, y + arm * sy);
     }
     ctx.stroke();
+
+    // 墙面撞击残留：会消退的光斑，让空场地也留下"打过的痕迹"
+    if (this.wallMarks.length) {
+      ctx.globalCompositeOperation = "lighter";
+      for (const m of this.wallMarks) {
+        const a = m.life / m.ttl;
+        blitGlow(ctx, PAL.accent, m.x, m.y, 30, a * a * 0.30);
+      }
+      ctx.globalCompositeOperation = "source-over";
+    }
+  };
+
+  // ---------------------------------------------------------------- Boss 能量链路
+  // 供能节点和核心之间必须看得见连线，否则"打掉节点才露核心"这条规则读不出来
+  View.prototype._bossLinks = function (ctx, s) {
+    const boss = s.boss;
+    if (!boss || !boss.parts) return;
+    const core = boss.parts.find((p) => p.role === "core" && p.alive);
+    if (!core) return;
+    const nodes = boss.parts.filter((p) => p.alive && p.type === "shieldNode");
+    const cx = core.rect.x + core.rect.w / 2, cy = core.rect.y + core.rect.h / 2;
+    // 核心外的旋转环：所有 Boss 都有，让核心"在运转"
+    const ringR = Math.max(core.rect.w, core.rect.h) * 0.62;
+    ctx.globalCompositeOperation = "lighter";
+    ctx.strokeStyle = rgba(core.invuln ? PAL.steel : PAL.amber, 0.28);
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([10, 8]);
+    ctx.lineDashOffset = -this.t * 26;
+    ctx.beginPath();
+    ctx.arc(cx, cy, ringR, 0, 6.2832);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineDashOffset = 0;
+    if (!nodes.length) { ctx.globalCompositeOperation = "source-over"; return; }
+    for (const n of nodes) {
+      const nx = n.rect.x + n.rect.w / 2, ny = n.rect.y + n.rect.h / 2;
+      const a = 0.22 + 0.12 * Math.sin(this.t * 4 + nx * 0.013);
+      const mx = (cx + nx) / 2, my = (cy + ny) / 2 - 30;
+      ctx.strokeStyle = rgba(PAL.violet, a);
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(nx, ny);
+      ctx.quadraticCurveTo(mx, my, cx, cy);
+      ctx.stroke();
+      // 沿线流动的能量点：方向指向核心，暗示"节点在给核心供电"
+      const k = ((this.t * 0.75) + (nx % 97) / 97) % 1;
+      const u = 1 - k;
+      const px = u * u * nx + 2 * u * k * mx + k * k * cx;
+      const py = u * u * ny + 2 * u * k * my + k * k * cy;
+      blitGlow(ctx, PAL.violet, px, py, 11, 0.55 * Math.sin(k * Math.PI));
+    }
+    ctx.globalCompositeOperation = "source-over";
   };
 
   // ---------------------------------------------------------------- 砖块
@@ -612,6 +922,13 @@
       ctx.strokeStyle = "rgba(255,255,255,0.09)";
       ctx.lineWidth = 1;
       ctx.strokeRect(r.x + 1.5, r.y + 1.5, r.w - 3, r.h - 3);
+      // 掠过光：每块砖相位不同，整片砖墙看起来是"通电运行"的，而不是贴图
+      const ph = ((((b.rect.x * 0.37 + b.rect.y * 0.61) | 0) * 0.137) + this.t * 0.5) % 1;
+      const sheen = Math.sin(ph * Math.PI);
+      if (sheen > 0.05) {
+        ctx.fillStyle = `rgba(255,255,255,${(b.type === "solid" ? 0.03 : 0.075) * sheen})`;
+        ctx.fillRect(r.x, r.y + r.h * ph, r.w, 1.3);
+      }
       this._brickGlyph(ctx, b, r, c);
       this._brickDamage(ctx, b, r);
       ctx.restore();
@@ -826,6 +1143,27 @@
       const life = Math.max(0, 1 - d.age / C.DROP_TTL);
       const nearEnd = life < 0.28;
 
+      // 彗尾：一次描边搞定，按采样点连成渐变曲线
+      const tr = this.dropTrail.get(d);
+      if (tr && tr.length >= 8) {
+        const cx0 = tr[0], cy0 = tr[1];
+        if (Math.hypot(x - cx0, y - cy0) > 4) {
+          ctx.globalCompositeOperation = "lighter";
+          const gt = ctx.createLinearGradient(cx0, cy0, x, y);
+          gt.addColorStop(0, rgba(def.color, 0));
+          gt.addColorStop(1, rgba(def.color, 0.34));
+          ctx.strokeStyle = gt;
+          ctx.lineWidth = size * 0.40;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(cx0, cy0);
+          for (let i = 2; i < tr.length; i += 2) ctx.lineTo(tr[i], tr[i + 1]);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          ctx.globalCompositeOperation = "source-over";
+        }
+      }
+
       ctx.globalCompositeOperation = "lighter";
       blitGlow(ctx, def.color, x, y, size * 1.5, 0.34 * (nearEnd ? 0.4 + 0.6 * Math.abs(Math.sin(this.t * 14)) : 1));
       ctx.globalCompositeOperation = "source-over";
@@ -856,6 +1194,21 @@
       ctx.textBaseline = "middle";
       ctx.fillText(def.glyph, x, y + 1);
       ctx.textBaseline = "alphabetic";
+
+      // 磁吸牵引：能看见它正被往挡板拽
+      if ((s.mods && s.mods.magnet > 0) || (s.buffs && s.buffs.magnet > 0)) {
+        const ddx = s.paddleX - x, ddy = C.PADDLE_TOP - y;
+        if (Math.hypot(ddx, ddy) < 430) {
+          ctx.strokeStyle = rgba(def.color, 0.20 + 0.12 * Math.sin(this.t * 9 + d.ph));
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 7]);
+          ctx.beginPath();
+          ctx.moveTo(x, y + half);
+          ctx.quadraticCurveTo((x + s.paddleX) / 2, (y + C.PADDLE_TOP) / 2 + 30, s.paddleX, C.PADDLE_TOP);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
 
       // 落地提示线
       if (d.y > C.PADDLE_TOP - 210) {
@@ -901,6 +1254,29 @@
     const laser = s.buffs && s.buffs.laser > 0;
     const tint = laser ? PAL.amber : wide ? PAL.cyan : PAL.accent;
 
+    // 移动拖影：快速甩挡板时会留下几道残像，静止时自然消失
+    if (this.paddleTrail.length > 1) {
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = tint;
+      for (const p of this.paddleTrail) {
+        const dx = Math.abs(p.x - s.paddleX);
+        if (dx < 2) continue;
+        const a = Math.max(0, p.life / 0.11);
+        ctx.globalAlpha = a * Math.min(0.20, dx / 260);
+        roundRect(ctx, p.x - w / 2, y + 1, w, C.PADDLE_H - 2, 4);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // 地面能量投影：挡板悬浮在能量场上，给场地一点纵深
+    ctx.globalCompositeOperation = "lighter";
+    ctx.save();
+    ctx.translate(s.paddleX, y + 30);
+    ctx.scale(1, 0.30);
+    blitGlow(ctx, tint, 0, 0, w * 0.62, 0.09 + this.paddleFlash * 0.12);
+    ctx.restore();
     // 能量场
     ctx.globalCompositeOperation = "lighter";
     const halo = ctx.createLinearGradient(0, y - 26, 0, y + 22);
@@ -1034,10 +1410,56 @@
       }
 
       // 辉光
+      const spd = Math.hypot(b.vx || 0, b.vy || 0);
+      const sk = Math.max(0, Math.min(1, (spd - C.BASE_SPEED) / (C.MAX_SPEED - C.BASE_SPEED)));
       ctx.globalCompositeOperation = "lighter";
-      blitGlow(ctx, c, b.x, b.y, b.r * 4.0, 0.22);
+      blitGlow(ctx, c, b.x, b.y, b.r * (4.0 + sk * 1.6), 0.22 + sk * 0.12);
+      // 速度拉丝：球越快，身后拖的细光越明显（用预烘焙光条，避免每帧造渐变）
+      if (sk > 0.08) {
+        const d0 = b.dir();
+        const spr = streakSprite(c);
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(Math.atan2(d0.y, d0.x) - Math.PI / 2);
+        ctx.globalAlpha = 0.34 * sk;
+        for (let i = 0; i < 3; i++) {
+          const off = (i - 1) * b.r * 0.85;
+          const len = b.r * (2.2 + i * 0.6) * (0.6 + sk * 3.2);
+          ctx.drawImage(spr, off - 1.5, -len, 3, len);
+        }
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+      // 能量环：两个不同倾角的椭圆绕球旋转，随速度加速
+      const ringA = 0.10 + sk * 0.30;
+      if (ringA > 0.12) {
+        const ph = this.t * (1.6 + sk * 5.0);
+        ctx.strokeStyle = rgba(c, ringA);
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y, b.r + 5.5, b.r * 0.55, ph, 0, 6.2832);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y, b.r + 8.5, b.r * 0.42, -ph * 1.37 + 1.1, 0, 6.2832);
+        ctx.stroke();
+      }
       ctx.globalCompositeOperation = "source-over";
 
+      // 撞击挤压：沿法线压扁，90ms 回弹
+      const fx = this.ballFx.get(b);
+      let sqx = 1, sqy = 1;
+      if (fx) {
+        const k = Math.max(0, fx.t / 0.09);
+        const amp = 0.28 * k;
+        sqx = 1 - amp * Math.abs(fx.nx) + amp * Math.abs(fx.ny) * 0.6;
+        sqy = 1 - amp * Math.abs(fx.ny) + amp * Math.abs(fx.nx) * 0.6;
+      }
+      ctx.save();
+      if (sqx !== 1 || sqy !== 1) {
+        ctx.translate(b.x, b.y);
+        ctx.scale(sqx, sqy);
+        ctx.translate(-b.x, -b.y);
+      }
       // 球体
       const g = ctx.createRadialGradient(b.x - b.r * 0.35, b.y - b.r * 0.35, 0.5, b.x, b.y, b.r + 2);
       g.addColorStop(0, "#ffffff");
@@ -1048,6 +1470,7 @@
       ctx.strokeStyle = rgba(c, 0.95);
       ctx.lineWidth = 1.3;
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 1.6, 0, 6.2832); ctx.stroke();
+      ctx.restore();
 
       // 方向指示（短箭头，不抢主体）
       const d = b.dir();
@@ -1192,6 +1615,13 @@
 
   // ---------------------------------------------------------------- 后处理
   View.prototype._post = function (ctx, s) {
+    // 冲击暗角：和 zoom 同步，越重的一次命中压得越狠
+    if (this.zoom > 0.03 && this._punchVig) {
+      ctx.globalAlpha = 0.34 * this.zoom;
+      ctx.fillStyle = this._punchVig;
+      ctx.fillRect(0, 0, C.W, C.H);
+      ctx.globalAlpha = 1;
+    }
     // 命中泛光
     if (this.hitFlash > 0) {
       ctx.fillStyle = rgba(PAL.rose, 0.05 * this.hitFlash);
@@ -1207,6 +1637,53 @@
       const vg = ctx.createRadialGradient(C.W / 2, C.H / 2, C.H * 0.35, C.W / 2, C.H / 2, C.H * 0.85);
       vg.addColorStop(0, "rgba(255,60,80,0)");
       vg.addColorStop(1, `rgba(255,60,80,${p})`);
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, C.W, C.H);
+    }
+  };
+
+  // ---------------------------------------------------------------- 屏体后处理
+  // 这一层画在 shake/zoom 变换之外：噪点、暗角和色散如果跟着画面晃，会立刻穿帮。
+  View.prototype._screen = function (ctx, s) {
+    const lv = this.settings.crt || 0;
+    const crt = lv === 0 ? 0 : lv >= 2 ? 1.7 : 1;
+
+    // 整屏荧光：极轻的呼吸，让画面"通电"而不是死的
+    if (crt > 0) {
+      const flick = 0.010 + 0.006 * Math.sin(this.t * 37.3) + 0.004 * Math.sin(this.t * 91.7);
+      ctx.fillStyle = `rgba(150,255,205,${flick * crt})`;
+      ctx.fillRect(0, 0, C.W, C.H);
+    }
+
+    // 噪点：预烘焙瓦片，每帧一次 pattern 填充。高 DPI 下填充面积是 4 倍，
+    // 而颗粒在那种像素密度下本来也看不见，直接跳过省一笔
+    const noiseArea = C.W * C.H * this.dpr * this.dpr;
+    if (this._noisePat && crt > 0 && noiseArea < 2.6e6) {
+      ctx.save();
+      ctx.globalAlpha = (0.026 + crt * 0.014 + this.chroma * 0.026);
+      ctx.translate(-this._noiseOff, -(this._noiseOff * 0.63) % 96);
+      ctx.fillStyle = this._noisePat;
+      ctx.fillRect(0, 0, C.W + 96, C.H + 96);
+      ctx.restore();
+    }
+
+    // 边缘色散：常态极淡，受击时向外扩，Boss 战与高连击常驻一点
+    const bossLow = s.boss && s.boss.maxHp > 0 ? Math.max(0, 1 - s.boss.hp / s.boss.maxHp) : 0;
+    const disp = Math.min(1, this.chroma + (s.boss ? 0.14 : 0) + Math.max(0, s.combo - 6) * 0.02);
+    if (disp > 0.02) {
+      ctx.globalAlpha = 0.085 * disp;
+      ctx.fillStyle = this._dispL; ctx.fillRect(0, 0, 150, C.H);
+      ctx.fillStyle = this._dispR; ctx.fillRect(C.W - 150, 0, 150, C.H);
+      ctx.globalAlpha = 1;
+    }
+
+    // Boss 濒死：屏幕边缘随核心剩余血量收紧
+    if (bossLow > 0.6) {
+      const p = (bossLow - 0.6) / 0.4;
+      const pulse = 0.5 + 0.5 * Math.sin(this.t * (6 + p * 9));
+      const vg = ctx.createRadialGradient(C.W / 2, C.H / 2, C.H * 0.34, C.W / 2, C.H / 2, C.H * 0.92);
+      vg.addColorStop(0, "rgba(255,50,80,0)");
+      vg.addColorStop(1, `rgba(255,50,80,${0.05 + p * 0.10 * pulse})`);
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, C.W, C.H);
     }
