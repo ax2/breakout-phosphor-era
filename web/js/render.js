@@ -306,7 +306,7 @@
     this.bolts = [];
     this.motes = [];
     this.wallMarks = [];
-    this.settings = { particles: 1, shake: 0.7, crt: 1 };
+    this.settings = { particles: 1, shake: 0.7, crt: 1, reduceMotion: false };
     this.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
     this._bgCache = null;
     // 打击感：缩放冲击 / 色散强度 / 屏体闪烁
@@ -525,6 +525,27 @@
       Sfx.play("chain", -12, 1);
     });
     sim.on("pierce", (x, y) => f.burst(x, y, 0, -1, "#ffd479", 7, 200, 1.6));
+    sim.on("storm", (x, y) => {
+      this.bolts.push({ x1: x + this._rng.range(-40, 40), y1: C.CEIL + 4, x2: x, y2: y, t: 0.2 });
+      f.ring(x, y, "#b39cff", 3, 32, 0.32, 1.7);
+      f.burst(x, y, 0, -1, "#b39cff", 10, 240, 2);
+      this.impact(0.12);
+      Sfx.play("chain", -8, 0.72);
+    });
+    sim.on("ember", (x, y) => {
+      f.ring(x, y, "#ff7a5c", 2, 30, 0.3, 1.6);
+      f.burst(x, y, 0, -1, "#ff7a5c", 8, 190, 1.7);
+    });
+    sim.on("coldSnap", (x, y) => {
+      f.ring(x, y, "#7fd8ff", 3, 38, 0.36, 1.9);
+      f.wave(x, y, "rgba(127,216,255,0.8)", 50, 0.36);
+    });
+    sim.on("recall", (x) => {
+      f.ring(x, C.PADDLE_TOP, "#6be39a", 5, 66, 0.5, 2.6);
+      f.wave(x, C.PADDLE_TOP, "rgba(107,227,154,0.8)", 58, 0.5);
+      f.text(640, 470, "召回协议 · 球已回收", "#6be39a", 1.15, 17);
+      Sfx.play("correct", -5, 1.2);
+    });
     sim.on("shieldBroke", (x, y) => { f.ring(x, y, PAL.cyan, 10, 48, 0.5, 3); Sfx.play("correct", -6); });
     sim.on("shieldUsed", (n) => { if (n > 0) toastShield(n); });
     sim.on("ballSpawned", (x, y) => { f.ring(x, y, PAL.accent, 4, 32, 0.4, 2); f.wave(x, y, PAL.accent, 40, 0.4); });
@@ -561,6 +582,7 @@
 
   /** 统一打击反馈入口：缩放冲击 + 色散闪光，比单纯抖动更"实" */
   View.prototype.impact = function (power) {
+    if (this.settings.reduceMotion) power *= 0.22;
     this.zoom = Math.min(1, this.zoom + power * 0.42);
     this.chroma = Math.min(1, this.chroma + power * 0.62);
   };
@@ -1622,12 +1644,12 @@
       ctx.fillRect(0, 0, C.W, C.H);
       ctx.globalAlpha = 1;
     }
-    // 命中泛光
-    if (this.hitFlash > 0) {
+    // 命中泛光（减弱动效时一并关掉，避免强闪）
+    if (this.hitFlash > 0 && !this.settings.reduceMotion) {
       ctx.fillStyle = rgba(PAL.rose, 0.05 * this.hitFlash);
       ctx.fillRect(0, 0, C.W, C.H);
     }
-    if (this.levelFlash > 0) {
+    if (this.levelFlash > 0 && !this.settings.reduceMotion) {
       ctx.fillStyle = rgba(PAL.accent, 0.16 * this.levelFlash);
       ctx.fillRect(0, 0, C.W, C.H);
     }

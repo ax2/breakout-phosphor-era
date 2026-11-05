@@ -18,6 +18,8 @@
     pause_on_leave: true, auto_resume: true, pointer_lock: false,
     // 掉落物开关：关掉后回到纯构筑体验
     drops: true,
+    // 减弱动效：关掉缩放冲击、色散与强闪，震动沿用「屏幕抖动」档位
+    reduce_motion: false,
   };
 
   function defaults() {
@@ -27,6 +29,9 @@
       meta: {
         cleared: {}, best: {}, bestScore: 0, bestChapter: 0,
         runs: 0, wins: 0, totalBricks: 0, endlessBest: 0,
+        // 档案统计
+        deaths: 0, playTime: 0, noHitChapters: 0, flawless: {},
+        history: [], dailyStreak: 0, dailyLast: 0,
         unlocks: ["p1"], achievements: [], codex: { levels: [], relics: [], upgrades: [], bosses: [] },
       },
       records: { best_combo: 0, best_score: 0 },
@@ -91,6 +96,8 @@
     { id: "a6", name: "远征者", desc: "完成一次完整远征", check: (m) => (m.wins || 0) >= 1 },
     { id: "a7", name: "收藏家", desc: "图鉴收录 12 件遗物", check: (m) => (m.codex.relics || []).length >= 12 },
     { id: "a8", name: "无尽回响", desc: "无尽模式到达第 10 层", check: (m) => (m.endlessBest || 0) >= 10 },
+    { id: "a9", name: "毫发无伤", desc: "整章不掉命通关", check: (m) => (m.noHitChapters || 0) >= 1 },
+    { id: "a10", name: "拆墙工", desc: "累计击碎 3000 块砖", check: (m) => (m.totalBricks || 0) >= 3000 },
   ];
 
   const UNLOCKS = [
@@ -163,8 +170,19 @@
     { id: "d6", name: "暴走", desc: "暴击率 +20%，暴击伤害 +1", mods: { critChance: 0.2, critMult: 1 } },
   ];
 
+  // 无尽模式：每层换一条场地规则。第 0 层固定标准场，
+  // 之后按 seed 轮换，保证同一种子可复现、不同局又不会老是同一副牌。
+  const ENDLESS_RULES = [
+    { id: "n0", name: "标准场", desc: "无额外修正", mods: {} },
+    { id: "n1", name: "超频", desc: "初始球速 +60，球速上限 +80", mods: { startSpeed: 60, maxSpeed: 80 } },
+    { id: "n2", name: "窄带", desc: "挡板 -22，作为补偿伤害 +1", mods: { paddleW: -22, damage: 1 } },
+    { id: "n3", name: "断援", desc: "本层不掉落物，碎片收益 +50%", mods: { goldBonus: 0.5 }, noDrops: true },
+    { id: "n4", name: "静电场", desc: "每 5 秒自动放电，暴击率 -5%", mods: { storm: 5, critChance: -0.05 } },
+  ];
+
   const Run = {
     current: null,
+
 
     dailyKey(d) {
       const dt = d || new Date();
@@ -219,6 +237,7 @@
         clearedNodes: 0,
         startTime: Date.now(),
         endlessFloor: 0,
+        tookDamage: false,
         xpNext: 5,
         taken: {},              // 本章已用关卡，避免重复
       };
@@ -229,6 +248,16 @@
 
     chapterIdx() { return this.current ? this.current.chapters[this.current.chapterPos] : 0; },
     chapterDef() { return CT.CHAPTERS[this.chapterIdx()] || CT.CHAPTERS[0]; },
+
+    // 当前层规则（只有无尽模式有；第 0 层固定标准场）
+    endlessRule(floor) {
+      const r = this.current;
+      const f = floor == null ? (r ? r.endlessFloor : 0) : floor;
+      if (f <= 0) return ENDLESS_RULES[0];
+      const seed = r ? (r.seed || 0) : 0;
+      const rest = ENDLESS_RULES.length - 1;
+      return ENDLESS_RULES[1 + ((f + (seed % rest)) % rest)];
+    },
 
     rollRoute(rng) {
       const r = this.current;
@@ -325,6 +354,7 @@
         const rule = DAILY_RULES.find((x) => x.id === r.daily.rule);
         if (rule) addMods(out, rule.mods);
       }
+      if (r.mode === "endless") addMods(out, this.endlessRule().mods);
       out.paddleW = Math.max(70, out.paddleW);
       out.maxSpeed = Math.min(1400, out.maxSpeed);
       return out;
@@ -432,6 +462,9 @@
       if (!win) return { end: true, reason: "defeat" };
       Meta.seeCodex("bosses", (CT.BOSSES[this.chapterIdx()] || {}).id);
       State.meta.bestChapter = Math.max(State.meta.bestChapter || 0, r.chapterPos + 1);
+      // 无伤章：整章没掉过命，才计入解锁「玻璃炮」的进度
+      if (!r.tookDamage) State.meta.noHitChapters = (State.meta.noHitChapters || 0) + 1;
+      r.tookDamage = false;
       r.gold += 60 + ((summary && summary.pickedGold) || 0);
       this.gainXp(20);
       if (r.mode === "endless") {

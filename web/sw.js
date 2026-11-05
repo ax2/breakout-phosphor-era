@@ -1,21 +1,21 @@
 /* BREAKOUT: 磷光纪元 — 离线缓存
  * 版本号一变就重建缓存；只缓存静态资源，不碰存档。
  */
-const CACHE = "phosphor-era-v4";
+const CACHE = "phosphor-era-v5";
 const ASSETS = [
   "./",
   "index.html",
   "manifest.webmanifest",
-  "assets/app.css",
+  "assets/app.css?v=0.7.0",
   "assets/icons/icon-192.png",
   "assets/icons/icon-512.png",
-  "data/levels.js",
-  "js/platform.js",
-  "js/core.js",
-  "js/content.js",
-  "js/run.js",
-  "js/render.js",
-  "js/ui.js",
+  "data/levels.js?v=0.7.0",
+  "js/platform.js?v=0.7.0",
+  "js/core.js?v=0.7.0",
+  "js/content.js?v=0.7.0",
+  "js/run.js?v=0.7.0",
+  "js/render.js?v=0.7.0",
+  "js/ui.js?v=0.7.0",
 ];
 
 self.addEventListener("install", (e) => {
@@ -48,6 +48,11 @@ self.addEventListener("fetch", (e) => {
         }
         return res;
       })
-      .catch(() => caches.match(req).then((hit) => hit || caches.match("index.html")))
+      .catch(() =>
+        caches.match(req)
+          // 页面里的资源带了 ?v= 版本号，缓存的 key 可能没有；忽略 query 再找一次
+          .then((hit) => hit || caches.match(req, { ignoreSearch: true }))
+          .then((hit) => hit || caches.match("index.html"))
+      )
   );
 });

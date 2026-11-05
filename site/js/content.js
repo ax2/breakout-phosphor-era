@@ -388,14 +388,14 @@
     { id: "f2", arch: "flame", name: "爆裂涂层", desc: "18% 概率在破砖时引爆", mods: { explodeChance: 0.18 } },
     { id: "f3", arch: "flame", name: "火势蔓延", desc: "灼烧会传染给相邻砖块", mods: { burnSpread: 1 } },
     { id: "f4", arch: "flame", name: "高温核心", desc: "灼烧伤害 +4/秒", mods: { burnDps: 4 } },
-    { id: "f5", arch: "flame", name: "余烬", desc: "伤害 +1；灼烧中的砖块被摧毁时额外爆炸", mods: { damage: 1 }, flag: "ember" },
+    { id: "f5", arch: "flame", name: "余烬", desc: "伤害 +1；灼烧中的砖块被摧毁时额外爆炸", mods: { damage: 1, ember: 1 }, flag: "ember" },
     { id: "f6", arch: "flame", name: "熔穿", desc: "爆炸范围 +1 格", mods: { explodeRadius: 1 } },
 
     { id: "c1", arch: "frost", name: "霜冻附着", desc: "20% 概率冻结目标 2.5 秒", mods: { freezeChance: 0.2, freezeDur: 2.5 } },
     { id: "c2", arch: "frost", name: "碎冰", desc: "对冻结目标伤害 +80%", mods: { shatter: 0.8 } },
     { id: "c3", arch: "frost", name: "绝对零度", desc: "冻结概率 +15%，持续时间 +1.5 秒", mods: { freezeChance: 0.15, freezeDur: 1.5 } },
     { id: "c4", arch: "frost", name: "冰墙", desc: "获得 2 层底部护盾", mods: { shieldCharges: 2 } },
-    { id: "c5", arch: "frost", name: "寒流", desc: "冻结的砖块被摧毁时，冰冻周围 1 格", mods: {}, flag: "coldSnap" },
+    { id: "c5", arch: "frost", name: "寒流", desc: "冻结的砖块被摧毁时，冰冻周围 1 格", mods: { coldSnap: 1 }, flag: "coldSnap" },
     { id: "c6", arch: "frost", name: "慢速掌控", desc: "挡板宽度 +24", mods: { paddleW: 24 } },
 
     { id: "l1", arch: "thunder", name: "导电涂层", desc: "命中附加 1 层导电", mods: { charge: 1 } },
@@ -403,13 +403,13 @@
     { id: "l3", arch: "thunder", name: "高压", desc: "连锁伤害 +1", mods: { chainDamage: 1 } },
     { id: "l4", arch: "thunder", name: "节点跳跃", desc: "连锁次数 +3", mods: { chainCount: 3 } },
     { id: "l5", arch: "thunder", name: "静电积累", desc: "暴击率 +10%，导电 +1", mods: { critChance: 0.1, charge: 1 } },
-    { id: "l6", arch: "thunder", name: "雷暴", desc: "每 6 秒自动对随机砖块放电", mods: {}, flag: "storm" },
+    { id: "l6", arch: "thunder", name: "雷暴", desc: "每 6 秒自动对随机砖块放电", mods: { storm: 6 }, flag: "storm" },
 
     { id: "m1", arch: "split", name: "分裂", desc: "破砖时 15% 概率分裂出一颗球", mods: { splitChance: 0.15 } },
     { id: "m2", arch: "split", name: "复制", desc: "每关开始额外获得 1 颗球", mods: { balls: 1 } },
     { id: "m3", arch: "split", name: "球海", desc: "额外 2 颗球，但单球伤害 -0", mods: { balls: 2 } },
     { id: "m4", arch: "split", name: "球数管理", desc: "分裂概率 +10%，球速上限 +40", mods: { splitChance: 0.1, maxSpeed: 40 } },
-    { id: "m5", arch: "split", name: "召回协议", desc: "失球时有 25% 概率补回一颗球", mods: {}, flag: "recall" },
+    { id: "m5", arch: "split", name: "召回协议", desc: "失球时有 25% 概率补回一颗球", mods: { recall: 0.25 }, flag: "recall" },
     { id: "m6", arch: "split", name: "球海战术", desc: "分裂概率 +20%，伤害 +1", mods: { splitChance: 0.2, damage: 1 } },
 
     { id: "e1", arch: "engineer", name: "激光阵列", desc: "每 3.2 秒向挡板上方最近的砖块发射激光", mods: { laserCd: 3.2, laserDamage: 1 } },

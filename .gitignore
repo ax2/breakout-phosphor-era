@@ -2,6 +2,7 @@
 # Windows 可执行包：单文件 105MB，超过 GitHub 单文件 100MB 上限，
 # 需要分发时走 Release 附件，不进版本库。
 dist/
+dist-*/
 build/
 *.exe
 *.pck

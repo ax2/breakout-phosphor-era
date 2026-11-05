@@ -337,6 +337,58 @@ html, body {
 .codex-item span { color: var(--dim); }
 .codex-item.locked { opacity: 0.42; }
 
+/* ------------------------------------------------------------ 档案 / 统计 */
+.menu-link {
+  position: absolute; right: 24px; top: 24px; padding: 9px 16px;
+  background: rgba(6, 16, 13, 0.72); color: var(--dim);
+  border: 1px solid rgba(124, 255, 178, 0.2);
+  font-family: var(--font); font-size: 12px; letter-spacing: 2px; cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+.menu-link:hover, .menu-link:focus { color: #c8ffe2; border-color: var(--phos); outline: none; }
+
+.arch-grid {
+  position: absolute; left: 72px; right: 72px; top: 252px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+}
+.arch-card {
+  height: 74px; padding: 9px 14px; position: relative;
+  background: rgba(7, 17, 14, 0.9); border: 1px solid rgba(124, 255, 178, 0.18);
+}
+.arch-card .alabel { font-size: 11px; letter-spacing: 2px; color: rgba(111, 143, 132, 0.9); }
+.arch-card b { display: block; font-size: 25px; font-weight: 400; color: #d9ffe9; margin-top: 1px; letter-spacing: 1px; }
+.arch-card .anote {
+  position: absolute; right: 12px; bottom: 8px;
+  font-size: 10px; font-style: normal; letter-spacing: 1px; color: rgba(124, 255, 178, 0.35);
+}
+.arch-cols {
+  position: absolute; left: 72px; right: 72px; top: 422px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+}
+.arch-panel {
+  height: 218px; padding: 12px 16px;
+  background: rgba(6, 15, 12, 0.82); border: 1px solid rgba(124, 255, 178, 0.16);
+}
+.arch-panel h3 {
+  margin: 0 0 8px; font-size: 12px; font-weight: 400;
+  letter-spacing: 3px; color: rgba(124, 255, 178, 0.6);
+}
+.ch-row { display: flex; align-items: center; gap: 10px; height: 29px; font-size: 12px; color: rgba(216, 255, 240, 0.8); }
+.ch-row > span { width: 34px; color: var(--dim); }
+.ch-row > b { width: 46px; text-align: right; font-weight: 400; color: rgba(216, 255, 240, 0.75); }
+.ch-bar { flex: 1; height: 4px; background: rgba(255, 255, 255, 0.06); }
+.ch-bar i { display: block; height: 100%; background: linear-gradient(90deg, #2f7d5b, #7cffb2); transition: width 0.3s; }
+.hist-row {
+  display: flex; align-items: center; gap: 10px; height: 30px;
+  font-size: 12px; border-bottom: 1px dashed rgba(124, 255, 178, 0.08);
+}
+.hist-row .hm { width: 58px; color: #7cffb2; letter-spacing: 1px; }
+.hist-row.lose .hm { color: #ff8f8f; }
+.hist-row .hd { flex: 1; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-row .hs { width: 64px; text-align: right; color: rgba(216, 255, 240, 0.85); }
+.arch-empty { font-size: 13px; color: var(--dim); height: 170px; display: flex; align-items: center; justify-content: center; }
+.arch-back { position: absolute; left: 72px; bottom: 22px; width: 140px; }
+
 .route-map { display: flex; gap: 10px; margin-top: 26px; }
 .rm {
   flex: 1; padding: 10px 12px; border: 1px solid rgba(124,255,178,0.12);
@@ -391,6 +443,20 @@ body.touch .pick-card .pname { font-size: 22px; }
 body.touch .pick-card .pdesc { font-size: 15px; }
 body.touch .node-card { min-height: 190px; }
 body.touch .evt-opt { padding: 16px 18px; font-size: 16px; }
+/* 档案页在手机上整体放大一档：1280 画布缩到 844 宽后，
+   11–12px 的字只剩 7px，数值和战绩会看不清。 */
+body.touch .menu-link { min-height: 64px; padding: 0 22px; font-size: 16px; }
+body.touch .arch-grid { top: 244px; gap: 8px; }
+body.touch .arch-cols { top: 436px; }
+body.touch .arch-card { height: 84px; }
+body.touch .arch-card .alabel { font-size: 13px; }
+body.touch .arch-card b { font-size: 29px; }
+body.touch .arch-card .anote { font-size: 11px; }
+body.touch .arch-panel { height: 236px; }
+body.touch .arch-panel h3 { font-size: 14px; }
+body.touch .ch-row, body.touch .hist-row { font-size: 14px; height: 31px; }
+body.touch .arch-empty { font-size: 15px; height: 180px; }
+body.touch .arch-back { left: auto; right: 24px; top: 16px; bottom: auto; width: 150px; min-height: 60px; }
 
 /* 刘海屏：把整个舞台往安全区内缩，避免被圆角/状态栏切掉 */
 body.touch #fit {

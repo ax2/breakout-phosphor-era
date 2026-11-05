@@ -1,7 +1,7 @@
 {
   "name": "breakout-phosphor-era",
   "productName": "BREAKOUT 磷光纪元",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "BREAKOUT：磷光纪元 — 桌面端外壳（与网页版共用同一份核心）",
   "main": "main.js",
   "private": true,
